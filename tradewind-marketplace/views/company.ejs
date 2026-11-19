@@ -1,0 +1,61 @@
+<%- include('partials/head') %>
+<div class="container" style="padding-top:24px">
+  <div class="card">
+    <div class="row between">
+      <div class="row" style="gap:18px"><%- include('partials/cologo', { co: c, size: 'lg' }) %>
+        <div><h1 class="mb0"><%= c.name %></h1>
+          <small><%= c.business_type %> · <%= c.city ? c.city + ', ' : '' %><%= c.country %><%= c.year_established ? ' · Established ' + c.year_established : '' %></small><br>
+          <% if (c.verification_status==='verified') { %><span class="verified">✔ Verified by TradeWind</span><% } else { %><small class="muted">Not yet verified</small><% } %>
+          <% if (c.plan!=='free') { %> <span class="badge b-premium">Premium member</span><% } %>
+        </div></div>
+      <div class="row">
+        <% if (user && company && company.is_buyer && company.id !== c.id && c.is_supplier) { %>
+          <form method="post" action="/saved/<%= c.id %>" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-outline"><%= saved ? '★ Saved' : '☆ Save supplier' %></button></form>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <div class="grid" style="grid-template-columns:1.6fr 1fr;margin-top:16px">
+    <div>
+      <div class="card"><h2>About</h2><p style="white-space:pre-wrap"><%= c.description || 'No description yet.' %></p>
+        <dl class="kv">
+          <dt>Industries</dt><dd><%= c.industries || '—' %></dd>
+          <% if (c.is_supplier) { %><dt>Capabilities</dt><dd><%= c.capabilities || '—' %></dd>
+          <dt>Production capacity</dt><dd><%= c.production_capacity || '—' %></dd>
+          <dt>Certifications</dt><dd><%= c.certifications || '—' %></dd><% } %>
+          <dt>Employees</dt><dd><%= c.employees || '—' %></dd>
+          <dt>Website</dt><dd><% if (c.website) { %><a href="<%= c.website.startsWith('http') ? c.website : 'https://' + c.website %>" target="_blank" rel="noopener nofollow"><%= c.website %></a><% } else { %>—<% } %></dd>
+        </dl>
+      </div>
+      <% if (c.is_supplier) { %>
+      <h2 class="mt2">Products & stock (<%= products.length %>)</h2>
+      <% if (products.length) { %><div class="cards"><% products.forEach(p => { p.company_name = c.name; p.country = c.country; p.verification_status = c.verification_status; %><%- include('partials/pcard', { p }) %><% }) %></div>
+      <% } else { %><div class="card empty">No products listed yet.</div><% } } %>
+    </div>
+    <div>
+      <div class="card"><h3>Trust profile</h3>
+        <div class="bar"><span style="width:<%= h.trustScore(c) %>%"></span></div><p><b><%= h.trustScore(c) %>/100</b> <small>trust score</small></p>
+        <ul style="padding-left:18px;font-size:14px;color:var(--muted)">
+          <li>Company verification: <b><%= h.label(c.verification_status) %></b></li>
+          <li>Registration no.: <b><%= c.reg_number ? 'Provided' : 'Not provided' %></b></li>
+          <li>Tax / VAT ID: <b><%= c.tax_id ? 'Provided' : 'Not provided' %></b></li>
+          <li>Certifications: <b><%= c.certifications ? 'Yes' : 'None listed' %></b></li>
+        </ul>
+      </div>
+      <div class="card">
+        <% if (myOpenReqs.length && c.is_supplier && company.id !== c.id) { %>
+          <h3>Invite to your open RFQ</h3>
+          <% myOpenReqs.forEach(r => { %>
+            <form method="post" action="/my/requirements/<%= r.id %>/invite" style="margin-bottom:8px">
+              <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="supplier_company_id" value="<%= c.id %>"><input type="hidden" name="back" value="company">
+              <button class="btn btn-navy btn-sm btn-block">Invite to <%= r.ref %> · <%= r.title.slice(0,30) %></button>
+            </form>
+          <% }) %>
+          <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+        <% } %>
+        <%- include('partials/enquiry', { target: c, subject: 'Enquiry from TradeWind' }) %>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('partials/foot') %>

@@ -1,0 +1,11 @@
+<a class="pcard" href="/products/<%= p.id %>" style="position:relative">
+  <% if (p.featured) { %><span class="featured-tag">Featured</span><% } %>
+  <div class="img"><% if (p.image) { %><img src="/media/<%= p.image %>" alt="<%= p.name %>" loading="lazy"><% } else { %><%= p.name.charAt(0) %><% } %></div>
+  <div class="body">
+    <h3><%= p.name %></h3>
+    <div class="meta"><%= p.category || '' %><%= p.material ? ' · ' + p.material : '' %><%= p.grade ? ' ' + p.grade : '' %></div>
+    <div class="meta"><%= p.company_name %> · <%= p.country %> <% if (p.verification_status === 'verified') { %><span class="verified">✔</span><% } %></div>
+    <div class="row" style="margin-top:4px"><%- include('badge', { s: p.availability }) %><% if (p.availability === 'ready_stock' && p.stock_qty > 0) { %><small><%= h.num(p.stock_qty) %> <%= p.unit %> in stock</small><% } %></div>
+    <div class="price"><%= p.price != null ? h.money(p.price, p.currency) + ' / ' + p.unit : 'Price on request' %> <small class="muted">· MOQ <%= h.num(p.moq) %></small></div>
+  </div>
+</a>

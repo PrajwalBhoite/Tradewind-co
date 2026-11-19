@@ -1,0 +1,6 @@
+<%- include('../partials/app-start') %>
+<h1>Saved suppliers</h1>
+<% if (!rows.length) { %><div class="card empty">Save suppliers from their profile page to build your shortlist. <a href="/search?type=suppliers">Find suppliers</a></div><% } %>
+<% rows.forEach(c => { %><div class="list-item"><%- include('../partials/cologo', { co: c }) %><div style="flex:1"><h3 class="mb0"><a href="/companies/<%= c.id %>"><%= c.name %></a> <% if (c.verification_status==='verified') { %><span class="verified">✔ Verified</span><% } %></h3><small><%= c.business_type %> · <%= c.country %></small><p class="mb0"><%= (c.description||'').slice(0,160) %></p></div>
+  <form method="post" action="/saved/<%= c.id %>"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-ghost btn-sm">Remove</button></form></div><% }) %>
+<%- include('../partials/app-end') %>

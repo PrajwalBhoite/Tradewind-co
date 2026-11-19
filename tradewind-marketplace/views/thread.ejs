@@ -1,0 +1,20 @@
+<%- include('partials/app-start') %>
+<div class="page-h"><div><h1><%= t.subject %></h1><p class="muted mb0">With <b><%= otherName %></b><% if (!masked && other.verification_status==='verified') { %> <span class="verified">✔ Verified</span><% } %>
+  <% if (reqInfo) { %> · about <a href="<%= reqInfo.buyer_company_id === user.company_id ? '/my/requirements/' : '/rfq/' %><%= reqInfo.id %>"><%= reqInfo.ref %></a><% } %></p></div>
+  <a class="btn btn-outline" href="/messages">← All messages</a></div>
+<div class="card">
+  <div class="chat">
+    <% msgs.forEach(m => { const me = m.sender_company_id === user.company_id; %>
+      <div class="msg <%= me ? 'me' : '' %>"><div class="who"><%= me ? 'You' : m.sender %> · <%= h.ago(m.created_at) %></div><p><%= m.body %></p></div>
+    <% }) %>
+    <% if (!msgs.length) { %><div class="empty">Start the conversation below.</div><% } %>
+    <span id="bottom"></span>
+  </div>
+  <% if (user.role !== 'admin') { %>
+  <form method="post" action="/messages/<%= t.id %>" class="mt">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <textarea name="body" required placeholder="Type your message…"></textarea>
+    <div class="row between mt"><small class="muted">🔒 Emails and phone numbers are hidden until business is awarded.</small><button class="btn btn-primary">Send</button></div>
+  </form><% } %>
+</div>
+<%- include('partials/app-end') %>

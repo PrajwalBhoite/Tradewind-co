@@ -1,0 +1,13 @@
+<%- include('../partials/app-start') %>
+<h1>Quotation verification</h1>
+<p class="muted">Check each quotation is complete and commercially sensible before it is released to the buyer.</p>
+<div class="table-wrap"><table>
+  <tr><th>RFQ</th><th>Supplier</th><th>Price</th><th>vs target</th><th>Lead / terms</th><th>Valid</th><th>Status</th><th></th></tr>
+  <% rows.forEach(q => { %><tr><td><b><%= q.ref %></b><br><small><%= q.title %></small></td><td><%= q.supplier %><br><small><%= h.label(q.verification_status) %></small></td>
+    <td><b><%= h.money(q.unit_price, q.currency) %></b></td><td><%= q.target_price && q.currency===q.req_currency ? ((q.unit_price-q.target_price)/q.target_price*100).toFixed(1)+'%' : '—' %></td>
+    <td><small><%= q.lead_time_days %> d · <%= q.incoterm %><br><%= q.payment_terms %></small></td><td><small><%= h.date(q.validity_date) %></small></td><td><%- include('../partials/badge', { s: q.status }) %></td>
+    <td style="white-space:nowrap"><% if (q.status==='pending_review') { %><form method="post" action="/admin/quotes/<%= q.id %>" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-green btn-sm" name="action" value="approve">Release</button> <button class="btn btn-danger btn-sm" name="action" value="reject">Return</button></form><% } %>
+    <% if (q.attachment) { %><a class="btn btn-ghost btn-sm" href="/files/quote/<%= q.id %>">File</a><% } %></td></tr><% }) %>
+  <% if (!rows.length) { %><tr><td colspan="8" class="empty">No quotations yet.</td></tr><% } %>
+</table></div>
+<%- include('../partials/app-end') %>

@@ -1,0 +1,7 @@
+<%- include('../partials/app-start') %>
+<h1>Product moderation</h1>
+<div class="table-wrap"><table><tr><th>Product</th><th>Company</th><th>Category</th><th>Status</th><th></th></tr>
+<% rows.forEach(p => { %><tr><td><a href="/products/<%= p.id %>"><%= p.name %></a><%= p.featured ? ' ★' : '' %></td><td><%= p.company %></td><td><%= p.category %></td><td><%- include('../partials/badge', { s: p.status }) %></td>
+<td><form method="post" action="/admin/products/<%= p.id %>" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-outline btn-sm" name="action" value="<%= p.status==='active'?'hide':'show' %>"><%= p.status==='active'?'Hide':'Show' %></button> <button class="btn btn-ghost btn-sm" name="action" value="feature"><%= p.featured?'Unfeature':'Feature' %></button></form></td></tr><% }) %>
+</table></div>
+<%- include('../partials/app-end') %>

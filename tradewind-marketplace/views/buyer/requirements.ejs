@@ -1,0 +1,13 @@
+<%- include('../partials/app-start') %>
+<div class="page-h"><h1>My requirements</h1><a class="btn btn-primary" href="/requirements/new">+ Post requirement</a></div>
+<% if (!rows.length) { %><div class="card empty"><h3>No requirements yet</h3><p>Post your first requirement and receive quotations from matched, verified suppliers.</p><a class="btn btn-primary" href="/requirements/new">Post requirement</a></div><% } else { %>
+<div class="table-wrap"><table>
+  <tr><th>Ref</th><th>Requirement</th><th>Quantity</th><th>Status</th><th>Suppliers invited</th><th>Quotes</th><th>Deadline</th><th></th></tr>
+  <% rows.forEach(r => { %><tr>
+    <td><%= r.ref %></td><td><b><%= r.title %></b> <%= r.confidential ? '🔒' : '' %><br><small><%= r.category %></small></td>
+    <td><%= h.num(r.quantity) %> <%= r.unit %></td><td><%- include('../partials/badge', { s: r.status }) %></td>
+    <td><%= r.invited %></td><td><b><%= r.quotes %></b></td><td><%= h.date(r.quote_deadline) %></td>
+    <td><a class="btn btn-outline btn-sm" href="/my/requirements/<%= r.id %>">Manage</a></td>
+  </tr><% }) %>
+</table></div><% } %>
+<%- include('../partials/app-end') %>

@@ -1,0 +1,37 @@
+<%- include('../partials/app-start') %>
+<h1><%= p.id ? 'Edit product' : 'Add product / stock' %></h1>
+<form method="post" enctype="multipart/form-data" style="max-width:900px">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <fieldset><legend>Product</legend>
+    <div class="grid g2">
+      <div class="field"><label>Product name *</label><input type="text" name="name" value="<%= p.name || '' %>" required placeholder="e.g. Forged Steel Gate Valve 2&quot; Class 800"></div>
+      <div class="field"><label>Category *</label><select name="category_id" required><option value="">Select…</option>
+        <% Object.entries(cats).forEach(([ind, list]) => { %><optgroup label="<%= ind %>"><% list.forEach(c => { %><option value="<%= c.id %>" <%= p.category_id===c.id?'selected':'' %>><%= c.name %></option><% }) %></optgroup><% }) %></select></div>
+      <div class="field"><label>Material</label><input type="text" name="material" value="<%= p.material || '' %>" placeholder="SG Iron, Carbon Steel, Aluminium…"></div>
+      <div class="field"><label>Grade / standard</label><input type="text" name="grade" value="<%= p.grade || '' %>" placeholder="ASTM A105, EN-GJS-500-7, S355JR…"></div>
+    </div>
+    <div class="field"><label>Technical specifications</label><textarea name="specifications" rows="4" placeholder="Sizes, tolerances, standards, finish, testing…"><%= p.specifications || '' %></textarea></div>
+  </fieldset>
+  <fieldset><legend>Availability, stock & price</legend>
+    <div class="grid g3">
+      <div class="field"><label>Availability</label><select name="availability"><option value="ready_stock" <%= p.availability==='ready_stock'?'selected':'' %>>Ready stock</option><option value="made_to_order" <%= p.availability==='made_to_order'?'selected':'' %>>Made to order</option></select></div>
+      <div class="field"><label>Stock quantity</label><input type="number" step="any" min="0" name="stock_qty" value="<%= p.stock_qty %>"></div>
+      <div class="field"><label>Unit</label><select name="unit"><% h.UNITS.forEach(u => { %><option <%= p.unit===u?'selected':'' %>><%= u %></option><% }) %></select></div>
+      <div class="field"><label>Minimum order qty (MOQ)</label><input type="number" step="any" min="0" name="moq" value="<%= p.moq %>"></div>
+      <div class="field"><label>Unit price (blank = on request)</label><input type="number" step="any" min="0" name="price" value="<%= p.price ?? '' %>"></div>
+      <div class="field"><label>Currency</label><select name="currency"><% h.CURRENCIES.forEach(c => { %><option <%= p.currency===c?'selected':'' %>><%= c %></option><% }) %></select></div>
+      <div class="field"><label>Lead time (days)</label><input type="number" min="0" name="lead_time_days" value="<%= p.lead_time_days || '' %>"></div>
+      <div class="field"><label>Incoterm</label><select name="incoterm"><% h.INCOTERMS.forEach(i => { %><option <%= p.incoterm===i?'selected':'' %>><%= i %></option><% }) %></select></div>
+      <div class="field"><label>Stock location / ships from</label><input type="text" name="location" value="<%= p.location || '' %>"></div>
+    </div>
+  </fieldset>
+  <fieldset><legend>Media</legend>
+    <div class="grid g2">
+      <div class="field"><label>Product image</label><input type="file" name="image" accept="image/*"><% if (p.image) { %><div class="hint">Current: <a href="/media/<%= p.image %>" target="_blank">view</a></div><% } %></div>
+      <div class="field"><label>Datasheet / catalogue (PDF)</label><input type="file" name="datasheet" accept=".pdf,.doc,.docx,.xls,.xlsx"><% if (p.datasheet) { %><div class="hint">Current: <a href="/media/<%= p.datasheet %>" target="_blank">view</a></div><% } %></div>
+    </div>
+    <div class="field"><label>Visibility</label><select name="status"><option value="active" <%= p.status!=='hidden'?'selected':'' %>>Visible to buyers</option><option value="hidden" <%= p.status==='hidden'?'selected':'' %>>Hidden</option></select></div>
+  </fieldset>
+  <button class="btn btn-primary btn-lg"><%= p.id ? 'Save changes' : 'Publish product' %></button> <a class="btn btn-ghost" href="/supplier/products">Cancel</a>
+</form>
+<%- include('../partials/app-end') %>

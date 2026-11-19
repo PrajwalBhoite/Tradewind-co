@@ -1,0 +1,28 @@
+<%- include('../partials/app-start') %>
+<div class="page-h"><div><small><a href="/admin/requirements">← Requirements</a></small><h1><%= r.ref %> · <%= r.title %></h1><div class="row"><%- include('../partials/badge', { s: r.status }) %><% if (r.confidential) { %><span class="badge b-pending">🔒 Confidential</span><% } %></div></div></div>
+<div class="grid" style="grid-template-columns:1fr 1fr">
+  <div class="card"><h3>Details</h3>
+    <dl class="kv"><dt>Buyer</dt><dd><a href="/admin/companies/<%= r.buyer_company_id %>"><%= r.buyer %></a></dd><dt>Category</dt><dd><%= r.category %></dd><dt>Material / grade</dt><dd><%= r.material %> <%= r.grade %></dd>
+    <dt>Quantity</dt><dd><%= h.num(r.quantity) %> <%= r.unit %></dd><dt>Target</dt><dd><%= h.money(r.target_price, r.currency) %></dd><dt>Delivery</dt><dd><%= r.incoterm %> <%= [r.delivery_location, r.delivery_country].filter(Boolean).join(", ") %></dd>
+    <dt>Deadline</dt><dd><%= h.date(r.quote_deadline) %></dd></dl>
+    <p class="mt" style="white-space:pre-wrap"><%= r.specifications %></p>
+    <% if (r.attachment) { %><a href="/files/requirement/<%= r.id %>">⬇ Attachment</a><% } %>
+  </div>
+  <div class="card" style="margin-top:0"><h3>Screening decision</h3>
+    <form method="post"><input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="field"><label>Note (shown to buyer if rejected)</label><textarea name="note" rows="2"><%= r.admin_note || '' %></textarea></div>
+      <div class="row"><% if (r.status==='pending_review' || r.status==='rejected') { %><button class="btn btn-green" name="action" value="approve">✔ Approve & distribute</button><% } %>
+      <% if (r.status==='pending_review') { %><button class="btn btn-danger" name="action" value="reject">Reject</button><% } %>
+      <% if (r.status==='open') { %><button class="btn btn-outline" name="action" value="close">Close RFQ</button><% } %></div>
+    </form>
+    <h3 class="mt">Invited suppliers (<%= invites.length %>)</h3>
+    <% invites.forEach(i => { %><div class="row between" style="padding:5px 0;border-bottom:1px solid var(--line)"><span><%= i.name %> <small>(<%= i.source %>)</small></span><span class="row"><span class="score"><%= i.match_score %>%</span><%- include('../partials/badge', { s: i.status }) %></span></div><% }) %>
+  </div>
+</div>
+<div class="card mt"><h3>Matching engine results</h3><p class="muted">Approving sends the RFQ automatically to the top matches. You can also invite manually.</p>
+  <div class="table-wrap"><table><tr><th>Supplier</th><th>Score</th><th>Reasons</th><th></th></tr>
+  <% matches.forEach(m => { %><tr><td><%= m.company.name %><br><small><%= m.company.country %> · <%= h.label(m.company.verification_status) %></small></td><td><span class="score"><%= m.score %>%</span></td><td><small><%= m.reasons.join(' · ') %></small></td>
+  <td><form method="post"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="action" value="invite"><input type="hidden" name="supplier_company_id" value="<%= m.company.id %>"><input type="hidden" name="score" value="<%= m.score %>"><button class="btn btn-outline btn-sm">Invite</button></form></td></tr><% }) %>
+  <% if (!matches.length) { %><tr><td colspan="4" class="empty">No suppliers meet the minimum match score yet.</td></tr><% } %></table></div>
+</div>
+<%- include('../partials/app-end') %>

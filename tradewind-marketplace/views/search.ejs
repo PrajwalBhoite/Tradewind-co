@@ -1,0 +1,48 @@
+<%- include('partials/head') %>
+<div class="container">
+  <div class="search-layout">
+    <form class="filters" action="/search" data-autosubmit>
+      <input type="hidden" name="type" value="<%= type %>">
+      <div class="field"><label>Keyword</label><input type="search" name="q" value="<%= q %>" placeholder="Product, material, company…"></div>
+      <div class="field"><label>Industry</label><select name="industry"><option value="">All industries</option>
+        <% Object.keys(cats).forEach(i => { %><option <%= filters.industry===i?'selected':'' %>><%= i %></option><% }) %></select></div>
+      <div class="field"><label>Category</label><select name="category"><option value="">All categories</option>
+        <% Object.entries(cats).forEach(([ind, list]) => { %><optgroup label="<%= ind %>"><% list.forEach(c => { %><option value="<%= c.id %>" <%= String(filters.category)===String(c.id)?'selected':'' %>><%= c.name %></option><% }) %></optgroup><% }) %></select></div>
+      <div class="field"><label>Country</label><select name="country"><option value="">All countries</option>
+        <% countries.forEach(c => { %><option <%= filters.country===c?'selected':'' %>><%= c %></option><% }) %></select></div>
+      <div class="field"><label>Availability</label><select name="availability"><option value="">Any</option>
+        <option value="ready_stock" <%= filters.availability==='ready_stock'?'selected':'' %>>Ready stock</option>
+        <% if (type==='products') { %><option value="made_to_order" <%= filters.availability==='made_to_order'?'selected':'' %>>Made to order</option><% } %></select></div>
+      <label class="check"><input type="checkbox" name="verified" value="1" <%= filters.verified?'checked':'' %>> Verified suppliers only</label>
+      <button class="btn btn-primary btn-block mt">Apply filters</button>
+      <a class="btn btn-ghost btn-block" href="/search?type=<%= type %>">Clear</a>
+    </form>
+    <div>
+      <div class="tabs">
+        <a class="<%= type==='products'?'on':'' %>" href="/search?type=products&q=<%= encodeURIComponent(q) %>">Products & stock</a>
+        <a class="<%= type==='suppliers'?'on':'' %>" href="/search?type=suppliers&q=<%= encodeURIComponent(q) %>">Suppliers & manufacturers</a>
+      </div>
+      <p class="muted"><%= results.length %> result<%= results.length===1?'':'s' %><%= q ? ' for “' + q + '”' : '' %></p>
+      <% if (!results.length) { %>
+        <div class="card empty"><h3>No matches found</h3><p>Can't find what you need? Post a requirement and we'll match you with suppliers who can make it.</p><a class="btn btn-primary" href="/requirements/new">Post a requirement</a></div>
+      <% } else if (type === 'products') { %>
+        <div class="cards"><% results.forEach(p => { %><%- include('partials/pcard', { p }) %><% }) %></div>
+      <% } else { results.forEach(c => { %>
+        <div class="list-item">
+          <%- include('partials/cologo', { co: c }) %>
+          <div style="flex:1">
+            <div class="row"><h3 class="mb0"><a href="/companies/<%= c.id %>"><%= c.name %></a></h3>
+              <% if (c.verification_status==='verified') { %><span class="verified">✔ Verified</span><% } %>
+              <% if (c.plan!=='free') { %><span class="badge b-premium">Premium</span><% } %></div>
+            <small><%= c.business_type %> · <%= c.city ? c.city + ', ' : '' %><%= c.country %><%= c.year_established ? ' · Since ' + c.year_established : '' %> · <%= c.product_count %> products</small>
+            <p class="mt0" style="margin-top:6px"><%= (c.description || '').slice(0, 220) %></p>
+            <% if (c.capabilities) { %><small><b>Capabilities:</b> <%= c.capabilities %></small><br><% } %>
+            <% if (c.certifications) { %><small><b>Certifications:</b> <%= c.certifications %></small><% } %>
+          </div>
+          <a class="btn btn-outline btn-sm" href="/companies/<%= c.id %>">View profile</a>
+        </div>
+      <% }) } %>
+    </div>
+  </div>
+</div>
+<%- include('partials/foot') %>

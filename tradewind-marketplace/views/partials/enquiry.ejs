@@ -1,0 +1,12 @@
+<% if (!user) { %>
+  <a class="btn btn-primary btn-block" href="/login">Log in to contact supplier</a>
+<% } else if (company && company.id !== target.id && user.role !== 'admin') { %>
+  <form method="post" action="/messages/start/new">
+    <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="to_company_id" value="<%= target.id %>">
+    <% if (typeof productId !== 'undefined') { %><input type="hidden" name="product_id" value="<%= productId %>"><% } %>
+    <input type="hidden" name="subject" value="<%= subject %>">
+    <div class="field"><label>Send an enquiry</label><textarea name="body" required placeholder="Quantity, specifications, delivery location, timeline…"></textarea></div>
+    <button class="btn btn-primary btn-block">Send enquiry</button>
+    <p class="hint">Contact details are shared through the platform once business is awarded.</p>
+  </form>
+<% } %>

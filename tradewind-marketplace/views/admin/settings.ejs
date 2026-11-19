@@ -1,0 +1,9 @@
+<%- include('../partials/app-start') %>
+<h1>Platform settings</h1>
+<form method="post" class="card" style="max-width:640px"><input type="hidden" name="_csrf" value="<%= csrf %>">
+  <label class="check field"><input type="checkbox" name="requirement_review" value="1" <%= s.requirement_review==='1'?'checked':'' %>> <span><b>Screen requirements before distribution</b><br><small>New requirements wait for admin approval before being sent to matched suppliers.</small></span></label>
+  <label class="check field"><input type="checkbox" name="quote_review" value="1" <%= s.quote_review==='1'?'checked':'' %>> <span><b>Verify quotations before release</b><br><small>Quotations are reviewed by the admin team before the buyer sees them.</small></span></label>
+  <label class="check field"><input type="checkbox" name="mask_contacts" value="1" <%= s.mask_contacts==='1'?'checked':'' %>> <span><b>Mask contact details in messages</b><br><small>Emails and phone numbers are hidden until an RFQ between the parties is awarded.</small></span></label>
+  <button class="btn btn-primary">Save settings</button>
+</form>
+<%- include('../partials/app-end') %>

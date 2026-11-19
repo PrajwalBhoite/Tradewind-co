@@ -1,0 +1,54 @@
+<%- include('partials/app-start') %>
+<div class="page-h"><div><h1>Welcome, <%= user.name.split(' ')[0] %></h1><p class="muted mb0"><%= company.name %> · <%= company.is_buyer && company.is_supplier ? 'Buyer & Supplier' : company.is_buyer ? 'Buyer' : 'Supplier' %></p></div>
+  <div class="row"><% if (company.is_buyer) { %><a class="btn btn-primary" href="/requirements/new">+ Post requirement</a><% } %><% if (company.is_supplier) { %><a class="btn btn-navy" href="/supplier/products/new">+ Add product</a><% } %></div></div>
+
+<% if (d.completeness < 80 || company.verification_status !== 'verified') { %>
+<div class="card" style="border-left:4px solid var(--orange)">
+  <div class="row between"><div><h3 class="mb0">Profile <%= d.completeness %>% complete</h3>
+    <small><%= company.verification_status === 'pending' ? 'Verification is in progress.' : 'Complete your profile and get verified to rank higher and win more trust.' %></small></div>
+    <a class="btn btn-outline btn-sm" href="/company/edit">Complete profile</a></div>
+  <div class="bar mt"><span style="width:<%= d.completeness %>%"></span></div>
+</div><% } %>
+
+<% if (company.is_buyer) { %>
+<h2 class="mt2">Buying</h2>
+<div class="stats">
+  <div class="stat"><b><%= d.buyerStats.open %></b><span>Open requirements</span></div>
+  <div class="stat"><b><%= d.buyerStats.review %></b><span>Under review</span></div>
+  <div class="stat"><b><%= d.buyerStats.quotes %></b><span>Quotations received</span></div>
+  <div class="stat"><b><%= d.buyerStats.saved %></b><span>Saved suppliers</span></div>
+</div>
+<div class="grid mt" style="grid-template-columns:1.4fr 1fr">
+  <div class="card"><div class="card-h"><h3>My requirements</h3><a href="/my/requirements">View all</a></div>
+    <% if (!d.reqs.length) { %><div class="empty">No requirements yet. <a href="/requirements/new">Post your first one</a>.</div><% } else { %>
+    <table><tr><th>Requirement</th><th>Status</th><th>Suppliers</th><th>Quotes</th></tr>
+      <% d.reqs.forEach(r => { %><tr><td><a href="/my/requirements/<%= r.id %>"><b><%= r.ref %></b> <%= r.title %></a></td><td><%- include('partials/badge', { s: r.status }) %></td><td><%= r.invited %></td><td><b><%= r.quotes %></b></td></tr><% }) %>
+    </table><% } %></div>
+  <div class="card"><div class="card-h"><h3>Latest quotations</h3></div>
+    <% if (!d.latestQuotes.length) { %><div class="empty">Quotations will appear here.</div><% } %>
+    <% d.latestQuotes.forEach(q => { %><div style="padding:8px 0;border-bottom:1px solid var(--line)"><b><%= q.supplier %></b> · <%= h.money(q.unit_price, q.currency) %><br><small><a href="/my/requirements/<%= q.requirement_id %>"><%= q.ref %></a> · <%= h.ago(q.created_at) %></small></div><% }) %>
+  </div>
+</div><% } %>
+
+<% if (company.is_supplier) { %>
+<h2 class="mt2">Selling</h2>
+<div class="stats six">
+  <div class="stat"><b><%= d.supStats.products %></b><span>Products</span></div>
+  <div class="stat"><b><%= d.supStats.stock %></b><span>In ready stock</span></div>
+  <div class="stat"><b><%= d.supStats.rfqs %></b><span>Open RFQs for you</span></div>
+  <div class="stat"><b><%= d.supStats.quotes %></b><span>Quotes submitted</span></div>
+  <div class="stat"><b><%= d.supStats.won %></b><span>Won</span></div>
+  <div class="stat"><b><%= d.supStats.views %></b><span>Product views</span></div>
+</div>
+<div class="card mt"><div class="card-h"><h3>Business opportunities — matched RFQs</h3><a href="/supplier/rfqs">RFQ inbox</a></div>
+  <% if (!d.invites.length) { %><div class="empty">No matched RFQs yet. Add products with categories, materials and grades so the matching engine can find you. <a href="/requirements">Browse public requirements</a>.</div><% } else { %>
+  <table><tr><th>RFQ</th><th>Match</th><th>Qty</th><th>Delivery</th><th>Quote by</th><th>Status</th><th></th></tr>
+  <% d.invites.forEach(i => { %><tr><td><b><%= i.ref %></b> <%= i.confidential ? '🔒 ' : '' %><%= i.title %></td><td><span class="score"><%= i.match_score %>%</span></td><td><%= h.num(i.quantity) %> <%= i.unit %></td><td><%= i.delivery_country %></td><td><%= h.date(i.quote_deadline) %></td><td><%- include('partials/badge', { s: i.status }) %></td><td><a class="btn btn-primary btn-sm" href="/rfq/<%= i.requirement_id %>">Open</a></td></tr><% }) %>
+  </table><% } %>
+</div><% } %>
+
+<div class="card mt"><div class="card-h"><h3>Recent conversations</h3><a href="/messages">All messages</a></div>
+  <% if (!d.threads.length) { %><div class="empty">No conversations yet.</div><% } %>
+  <% d.threads.forEach(t => { %><div style="padding:8px 0;border-bottom:1px solid var(--line)"><a href="/messages/<%= t.id %>"><b><%= t.subject %></b></a><br><small><%= h.ago(t.updated_at) %></small></div><% }) %>
+</div>
+<%- include('partials/app-end') %>

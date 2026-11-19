@@ -1,0 +1,8 @@
+<%- include('partials/app-start') %>
+<h1>Notifications</h1>
+<div class="card">
+  <% if (!rows.length) { %><div class="empty">You're all caught up.</div><% } %>
+  <% rows.forEach(n => { %><div style="padding:12px 0;border-bottom:1px solid var(--line);<%= n.is_read ? '' : 'font-weight:600' %>">
+    <%= n.is_read ? '' : '● ' %><% if (n.link) { %><a href="<%= n.link %>"><%= n.text %></a><% } else { %><%= n.text %><% } %><br><small><%= h.ago(n.created_at) %></small></div><% }) %>
+</div>
+<%- include('partials/app-end') %>

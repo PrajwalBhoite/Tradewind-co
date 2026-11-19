@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= typeof title !== 'undefined' ? title + ' · ' : '' %>TradeWind Co.</title>
+<meta name="description" content="TradeWind Co. by Crescendo Worldwide — global B2B marketplace connecting buyers with verified manufacturers, traders and stockists. Post requirements, get matched, compare quotations.">
+<link rel="icon" href="/static/img/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="container">
+    <button class="icon-btn burger" data-toggle=".nav, .side" aria-label="Menu">☰</button>
+    <a class="logo" href="/"><img src="/static/img/logo.png" alt="TradeWind Co. by Crescendo Worldwide"></a>
+    <nav class="nav">
+      <a href="/search?type=suppliers" class="<%= path==='/search' ? 'on' : '' %>">Find Suppliers</a>
+      <a href="/search?type=products">Products & Stock</a>
+      <a href="/requirements" class="<%= path==='/requirements' ? 'on' : '' %>">Buyer Requirements</a>
+      <a href="/how-it-works" class="<%= path==='/how-it-works' ? 'on' : '' %>">How it Works</a>
+      <a href="/pricing" class="<%= path==='/pricing' ? 'on' : '' %>">Membership</a>
+    </nav>
+    <div class="hdr-right">
+      <% if (user) { %>
+        <% if (company && company.is_buyer) { %><a class="btn btn-primary btn-sm hide-sm" href="/requirements/new">+ Post Requirement</a><% } %>
+        <a class="icon-btn" href="/messages" title="Messages">✉</a>
+        <a class="icon-btn" href="/notifications" title="Notifications">🔔<% if (unread) { %><span class="dot"><%= unread > 99 ? '99+' : unread %></span><% } %></a>
+        <details class="menu">
+          <summary><span class="avatar"><%= user.name.charAt(0).toUpperCase() %></span></summary>
+          <div class="menu-panel">
+            <div style="padding:8px 12px"><b><%= user.name %></b><br><small><%= company ? company.name : '' %></small></div>
+            <% if (user.role === 'admin') { %><a href="/admin">Admin panel</a><% } else { %><a href="/dashboard">Dashboard</a><a href="/company/edit">Company profile</a><% } %>
+            <a href="/account">My account</a>
+            <form method="post" action="/logout"><input type="hidden" name="_csrf" value="<%= csrf %>"><button>Log out</button></form>
+          </div>
+        </details>
+      <% } else { %>
+        <a class="btn btn-ghost hide-sm" href="/login">Log in</a>
+        <a class="btn btn-primary" href="/register">Register free</a>
+      <% } %>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,42 @@
+<%- include('partials/head') %>
+<div class="container" style="padding-top:24px">
+  <small><a href="/search?type=products">Products</a> › <%= p.industry || '' %> › <%= p.category || '' %></small>
+  <div class="grid" style="grid-template-columns:1.6fr 1fr;margin-top:12px">
+    <div>
+      <div class="card">
+        <div class="grid g2">
+          <div class="pcard" style="border:0"><div class="img" style="border-radius:10px"><% if (p.image) { %><img src="/media/<%= p.image %>" alt="<%= p.name %>"><% } else { %><%= p.name.charAt(0) %><% } %></div></div>
+          <div>
+            <h1><%= p.name %></h1>
+            <div class="row"><%- include('partials/badge', { s: p.availability }) %><% if (p.featured) { %><span class="badge b-premium">Featured</span><% } %></div>
+            <p class="mt" style="font-size:22px;font-weight:800;color:var(--navy)"><%= p.price != null ? h.money(p.price, p.currency) + ' / ' + p.unit : 'Price on request' %></p>
+            <dl class="kv">
+              <dt>MOQ</dt><dd><%= h.num(p.moq) %> <%= p.unit %></dd>
+              <dt>Stock available</dt><dd><%= p.availability==='ready_stock' ? h.num(p.stock_qty) + ' ' + p.unit : 'Made to order' %></dd>
+              <dt>Lead time</dt><dd><%= p.lead_time_days ? p.lead_time_days + ' days' : '—' %></dd>
+              <dt>Incoterm</dt><dd><%= p.incoterm || '—' %></dd>
+              <dt>Ships from</dt><dd><%= p.location || c.country %></dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+      <div class="card"><h2>Specifications</h2>
+        <dl class="kv"><dt>Category</dt><dd><%= p.category %></dd><dt>Material</dt><dd><%= p.material || '—' %></dd><dt>Grade</dt><dd><%= p.grade || '—' %></dd></dl>
+        <p class="mt" style="white-space:pre-wrap"><%= p.specifications %></p>
+        <% if (p.datasheet) { %><a class="btn btn-outline btn-sm" href="/media/<%= p.datasheet %>" target="_blank" rel="noopener">⬇ Download datasheet</a><% } %>
+      </div>
+      <% if (more.length) { %><h2 class="mt2">More from <%= c.name %></h2><div class="cards"><% more.forEach(m => { m.company_name = c.name; m.country = c.country; m.verification_status = c.verification_status; %><%- include('partials/pcard', { p: m }) %><% }) %></div><% } %>
+    </div>
+    <div>
+      <div class="card">
+        <div class="row"><%- include('partials/cologo', { co: c }) %><div><b><a href="/companies/<%= c.id %>"><%= c.name %></a></b><br><small><%= c.business_type %> · <%= c.country %></small><br>
+        <% if (c.verification_status==='verified') { %><span class="verified">✔ Verified supplier</span><% } %></div></div>
+        <div class="mt"><small>Trust score</small><div class="bar"><span style="width:<%= h.trustScore(c) %>%"></span></div><small><b><%= h.trustScore(c) %>/100</b></small></div>
+        <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+        <%- include('partials/enquiry', { target: c, productId: p.id, subject: 'Enquiry: ' + p.name }) %>
+        <% if (user && company && company.is_buyer) { %><a class="btn btn-outline btn-block mt" href="/requirements/new">Post a formal RFQ</a><% } %>
+      </div>
+    </div>
+  </div>
+</div>
+<%- include('partials/foot') %>

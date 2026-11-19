@@ -1,0 +1,15 @@
+<%- include('../partials/app-start') %>
+<div class="page-h"><div><h1>RFQ inbox</h1><p class="muted mb0">Requirements matched to your products and capabilities, or sent to you directly.</p></div><a class="btn btn-outline" href="/requirements">Browse public requirements</a></div>
+<% if (!rows.length) { %><div class="card empty"><h3>No RFQs yet</h3><p>The matching engine sends you RFQs that fit your categories, materials, grades, stock and capabilities. Add detailed products to improve matches.</p></div><% } else { %>
+<div class="table-wrap"><table>
+  <tr><th>RFQ</th><th>Match</th><th>Quantity</th><th>Delivery</th><th>Quote by</th><th>RFQ status</th><th>Your quote</th><th></th></tr>
+  <% rows.forEach(i => { %><tr>
+    <td><b><%= i.ref %></b> <%= i.confidential ? '🔒' : '' %><br><%= i.title %><br><small><%= i.category %> · via <%= i.source %></small></td>
+    <td><span class="score"><%= i.match_score %>%</span><% if (i.match_reasons) { %><br><small><%= i.match_reasons %></small><% } %></td>
+    <td><%= h.num(i.quantity) %> <%= i.unit %></td><td><%= i.delivery_country %> · <%= i.incoterm %></td><td><%= h.date(i.quote_deadline) %></td>
+    <td><%- include('../partials/badge', { s: i.req_status }) %></td>
+    <td><%- i.quote_status ? include('../partials/badge', { s: i.quote_status }) : include('../partials/badge', { s: i.status }) %></td>
+    <td><a class="btn btn-<%= i.quote_status ? 'outline' : 'primary' %> btn-sm" href="/rfq/<%= i.requirement_id %>"><%= i.quote_status ? 'View' : 'Quote' %></a></td>
+  </tr><% }) %>
+</table></div><% } %>
+<%- include('../partials/app-end') %>

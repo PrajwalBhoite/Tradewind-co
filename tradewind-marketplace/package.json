@@ -1,0 +1,23 @@
+{
+  "name": "tradewind-marketplace",
+  "version": "1.0.0",
+  "description": "TradeWind Co. by Crescendo Worldwide - Global B2B Buyer & Supplier Marketplace",
+  "main": "server.js",
+  "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning server.js",
+    "dev": "node --disable-warning=ExperimentalWarning --watch server.js",
+    "seed": "node --disable-warning=ExperimentalWarning seed.js",
+    "reset": "node --disable-warning=ExperimentalWarning seed.js --reset"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "ejs": "^7.0.2",
+    "express": "^4.22.3",
+    "express-session": "^1.19.0",
+    "multer": "^2.5.0"
+  }
+}

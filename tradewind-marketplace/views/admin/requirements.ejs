@@ -1,0 +1,9 @@
+<%- include('../partials/app-start') %>
+<h1>Requirements & RFQs</h1>
+<div class="table-wrap"><table>
+  <tr><th>Ref</th><th>Requirement</th><th>Buyer</th><th>Qty</th><th>Status</th><th>Invited</th><th>Quotes</th><th></th></tr>
+  <% rows.forEach(r => { %><tr><td><%= r.ref %><br><small><%= h.ago(r.created_at) %></small></td><td><b><%= r.title %></b> <%= r.confidential?'🔒':'' %><br><small><%= r.category %></small></td><td><%= r.buyer %></td>
+    <td><%= h.num(r.quantity) %> <%= r.unit %></td><td><%- include('../partials/badge', { s: r.status }) %></td><td><%= r.invited %></td><td><%= r.quotes %></td>
+    <td><a class="btn btn-<%= r.status==='pending_review'?'primary':'outline' %> btn-sm" href="/admin/requirements/<%= r.id %>"><%= r.status==='pending_review'?'Screen':'Open' %></a></td></tr><% }) %>
+</table></div>
+<%- include('../partials/app-end') %>

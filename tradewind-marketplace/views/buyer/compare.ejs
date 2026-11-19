@@ -1,0 +1,25 @@
+<%- include('../partials/app-start') %>
+<div class="page-h"><div><small><a href="/my/requirements/<%= r.id %>">← <%= r.ref %></a></small><h1>Compare quotations</h1><p class="muted mb0"><%= r.title %> · <%= h.num(r.quantity) %> <%= r.unit %> · <%= r.incoterm %> <%= r.delivery_location %></p></div></div>
+<% if (mixedCurrency) { %><div class="alert alert-info">Quotations are in different currencies — "best" highlights compare raw numbers. Convert before deciding.</div><% } %>
+<% if (!quotes.length) { %><div class="card empty">No quotations to compare yet.</div><% } else { %>
+<div class="table-wrap"><table>
+  <tr><th style="width:180px"></th><% quotes.forEach(q => { %><th style="text-transform:none;font-size:14px;color:var(--navy)"><%= q.supplier %><br><small><%= q.country %></small></th><% }) %></tr>
+  <tr><td><b>Unit price</b></td><% quotes.forEach(q => { %><td class="<%= q.unit_price===best.price?'best':'' %>"><b><%= h.money(q.unit_price, q.currency) %></b><% if (q.unit_price===best.price) { %><span class="best-tag">LOWEST PRICE</span><% } %></td><% }) %></tr>
+  <tr><td><b>Total value</b></td><% quotes.forEach(q => { %><td><%= h.money(q.total, q.currency) %></td><% }) %></tr>
+  <tr><td><b>vs target</b></td><% quotes.forEach(q => { %><td><%= r.target_price && q.currency===r.currency ? ((q.unit_price - r.target_price) / r.target_price * 100).toFixed(1) + '%' : '—' %></td><% }) %></tr>
+  <tr><td><b>Lead time</b></td><% quotes.forEach(q => { %><td class="<%= q.lead_time_days===best.lead?'best':'' %>"><%= q.lead_time_days ? q.lead_time_days + ' days' : '—' %><% if (q.lead_time_days===best.lead) { %><span class="best-tag">FASTEST</span><% } %></td><% }) %></tr>
+  <tr><td><b>MOQ</b></td><% quotes.forEach(q => { %><td><%= h.num(q.moq) %></td><% }) %></tr>
+  <tr><td><b>Incoterm</b></td><% quotes.forEach(q => { %><td><%= q.incoterm %></td><% }) %></tr>
+  <tr><td><b>Payment terms</b></td><% quotes.forEach(q => { %><td><%= q.payment_terms %></td><% }) %></tr>
+  <tr><td><b>Valid until</b></td><% quotes.forEach(q => { %><td><%= h.date(q.validity_date) %></td><% }) %></tr>
+  <tr><td><b>Supplier trust score</b></td><% quotes.forEach(q => { %><td class="<%= q.trust===best.trust?'best':'' %>"><div class="bar"><span style="width:<%= q.trust %>%"></span></div><%= q.trust %>/100</td><% }) %></tr>
+  <tr><td><b>Verified</b></td><% quotes.forEach(q => { %><td><%= q.verification_status==='verified' ? '✔ Yes' : 'No' %></td><% }) %></tr>
+  <tr><td><b>Certifications</b></td><% quotes.forEach(q => { %><td><small><%= q.certifications || '—' %></small></td><% }) %></tr>
+  <tr><td><b>Notes</b></td><% quotes.forEach(q => { %><td><small><%= q.notes || '—' %></small></td><% }) %></tr>
+  <tr><td><b>Status</b></td><% quotes.forEach(q => { %><td><%- include('../partials/badge', { s: q.status }) %></td><% }) %></tr>
+  <tr><td></td><% quotes.forEach(q => { %><td><% if (r.status==='open' && ['submitted','shortlisted'].includes(q.status)) { %>
+    <form method="post" action="/quotes/<%= q.id %>/award"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-green btn-sm btn-block" data-confirm="Award to <%= q.supplier %>?">Award</button></form>
+    <% if (q.status==='submitted') { %><form method="post" action="/quotes/<%= q.id %>/shortlist" class="mt" style="margin-top:6px"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-outline btn-sm btn-block">Shortlist</button></form><% } %>
+  <% } %></td><% }) %></tr>
+</table></div><% } %>
+<%- include('../partials/app-end') %>

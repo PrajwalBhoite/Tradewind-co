@@ -1,0 +1,13 @@
+<%- include('partials/head') %>
+<div class="auth-wrap"><div class="card">
+  <h1>Welcome back</h1><p class="muted">Log in to manage requirements, products and quotations.</p>
+  <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+  <form method="post" action="/login">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <div class="field"><label>Business email</label><input type="email" name="email" value="<%= email %>" required autofocus autocomplete="username"></div>
+    <div class="field"><label>Password</label><input type="password" name="password" required autocomplete="current-password"></div>
+    <button class="btn btn-primary btn-block btn-lg">Log in</button>
+  </form>
+  <p class="mt muted" style="text-align:center">New to TradeWind? <a href="/register">Create a free account</a></p>
+</div></div>
+<%- include('partials/foot') %>

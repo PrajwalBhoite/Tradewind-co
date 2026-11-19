@@ -1,0 +1,37 @@
+<%- include('../partials/app-start') %>
+<h1>Post a requirement</h1>
+<p class="muted">The more precise your details, the better the supplier matches. Our team screens each requirement before it is distributed.</p>
+<form method="post" action="/requirements/new" enctype="multipart/form-data" style="max-width:920px">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <fieldset><legend>What do you need?</legend>
+    <div class="field"><label>Requirement title *</label><input type="text" name="title" required placeholder="e.g. SG iron brake disc castings for metro bogies"></div>
+    <div class="grid g3">
+      <div class="field"><label>Category *</label><select name="category_id" required><option value="">Select…</option>
+        <% Object.entries(cats).forEach(([ind, list]) => { %><optgroup label="<%= ind %>"><% list.forEach(c => { %><option value="<%= c.id %>"><%= c.name %></option><% }) %></optgroup><% }) %></select></div>
+      <div class="field"><label>Material</label><input type="text" name="material" placeholder="SG Iron, SS316, Aluminium…"></div>
+      <div class="field"><label>Grade / standard</label><input type="text" name="grade" placeholder="EN-GJS-500-7, ASTM A105…"></div>
+    </div>
+    <div class="field"><label>Technical specifications</label><textarea name="specifications" rows="5" placeholder="Dimensions, tolerances, weight, testing, certificates, packing…"></textarea></div>
+    <div class="field"><label>Drawings / specification documents</label><input type="file" name="attachment"><div class="hint">PDF, DWG, DXF, STEP, images, Excel or ZIP — max 15 MB. Stored privately; only invited suppliers can download.</div></div>
+  </fieldset>
+  <fieldset><legend>Quantity & commercial</legend>
+    <div class="grid g4">
+      <div class="field"><label>Quantity *</label><input type="number" step="any" min="0" name="quantity" required></div>
+      <div class="field"><label>Unit</label><select name="unit"><% h.UNITS.forEach(u => { %><option><%= u %></option><% }) %></select></div>
+      <div class="field"><label>Target unit price</label><input type="number" step="any" min="0" name="target_price"></div>
+      <div class="field"><label>Currency</label><select name="currency"><% h.CURRENCIES.forEach(c => { %><option <%= r.currency===c?'selected':'' %>><%= c %></option><% }) %></select></div>
+    </div>
+  </fieldset>
+  <fieldset><legend>Delivery & timeline</legend>
+    <div class="grid g3">
+      <div class="field"><label>Incoterm</label><select name="incoterm"><% h.INCOTERMS.forEach(i => { %><option <%= r.incoterm===i?'selected':'' %>><%= i %></option><% }) %></select></div>
+      <div class="field"><label>Delivery location / port</label><input type="text" name="delivery_location" placeholder="e.g. Jebel Ali Port"></div>
+      <div class="field"><label>Delivery country</label><select name="delivery_country"><% h.COUNTRIES.forEach(c => { %><option <%= r.delivery_country===c?'selected':'' %>><%= c %></option><% }) %></select></div>
+      <div class="field"><label>Required delivery date</label><input type="date" name="required_by"></div>
+      <div class="field"><label>Quotation deadline</label><input type="date" name="quote_deadline"></div>
+    </div>
+    <label class="check"><input type="checkbox" name="confidential" value="1"> <span><b>Confidential sourcing</b> — hide my company name, target price and drawings from suppliers until I shortlist them. Not shown on the public board.</span></label>
+  </fieldset>
+  <button class="btn btn-primary btn-lg">Submit requirement</button>
+</form>
+<%- include('../partials/app-end') %>

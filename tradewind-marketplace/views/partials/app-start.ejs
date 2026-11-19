@@ -1,0 +1,42 @@
+<%- include('head') %>
+<div class="app">
+  <aside class="side">
+    <% if (user.role === 'admin') { %>
+      <div class="co"><b>Admin Control Panel</b><small>Crescendo Worldwide</small></div>
+      <a href="/admin" class="<%= path==='/admin' ? 'on':'' %>">📊 Overview</a>
+      <a href="/admin/companies">🏢 Companies & KYB</a>
+      <a href="/admin/requirements">📝 Requirements</a>
+      <a href="/admin/quotes">💬 Quotations</a>
+      <a href="/admin/products">📦 Products</a>
+      <a href="/admin/users">👤 Users</a>
+      <a href="/admin/categories">🗂 Categories</a>
+      <a href="/admin/settings">⚙ Settings</a>
+    <% } else { %>
+      <div class="co"><b><%= company.name %></b>
+        <% if (company.verification_status === 'verified') { %><span class="verified">✔ Verified</span><% } else { %><small><%= h.label(company.verification_status) %></small><% } %>
+        <% if (company.plan !== 'free') { %> <span class="badge b-premium"><%= company.plan %></span><% } %>
+      </div>
+      <a href="/dashboard" class="<%= path==='/dashboard' ? 'on':'' %>">📊 Dashboard</a>
+      <% if (company.is_buyer) { %>
+        <h6>Buying</h6>
+        <a href="/requirements/new" class="<%= path==='/requirements/new' ? 'on':'' %>">➕ Post requirement</a>
+        <a href="/my/requirements" class="<%= path.startsWith('/my/requirements') ? 'on':'' %>">📝 My requirements & quotes</a>
+        <a href="/my/saved" class="<%= path==='/my/saved' ? 'on':'' %>">⭐ Saved suppliers</a>
+        <a href="/search?type=suppliers">🔎 Find suppliers</a>
+      <% } %>
+      <% if (company.is_supplier) { %>
+        <h6>Selling</h6>
+        <a href="/supplier/products" class="<%= path.startsWith('/supplier/products') ? 'on':'' %>">📦 Products & stock</a>
+        <a href="/supplier/rfqs" class="<%= path==='/supplier/rfqs' ? 'on':'' %>">📥 RFQ inbox</a>
+        <a href="/supplier/quotes" class="<%= path==='/supplier/quotes' ? 'on':'' %>">💬 My quotations</a>
+        <a href="/requirements">🌐 Browse buyer requirements</a>
+      <% } %>
+      <h6>Account</h6>
+      <a href="/messages" class="<%= path.startsWith('/messages') ? 'on':'' %>">✉ Messages</a>
+      <a href="/notifications" class="<%= path==='/notifications' ? 'on':'' %>">🔔 Notifications<% if (unread) { %> <span class="dot" style="position:static"><%= unread %></span><% } %></a>
+      <a href="/company/edit" class="<%= path==='/company/edit' ? 'on':'' %>">🏢 Company profile</a>
+      <a href="/account" class="<%= path==='/account' ? 'on':'' %>">👤 My account</a>
+    <% } %>
+  </aside>
+  <main class="main">
+    <%- include('flash') %>

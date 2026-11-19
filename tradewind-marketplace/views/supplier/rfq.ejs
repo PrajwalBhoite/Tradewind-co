@@ -1,0 +1,67 @@
+<%- include('../partials/app-start') %>
+<div class="page-h"><div><small><%= r.ref %> · posted <%= h.ago(r.created_at) %></small>
+  <h1><%= revealed ? r.title : 'Confidential requirement · ' + (r.category || '') %></h1>
+  <div class="row"><%- include('../partials/badge', { s: r.status }) %><% if (r.confidential) { %><span class="badge b-pending">🔒 Confidential sourcing</span><% } %><% if (invite) { %><span class="score"><%= invite.match_score %>% match</span><% } %></div></div>
+  <% if (invite && !quote && r.status==='open' && invite.status!=='declined') { %><form method="post" action="/rfq/<%= r.id %>/decline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-ghost btn-sm">Not interested</button></form><% } %></div>
+<div class="grid" style="grid-template-columns:1.3fr 1fr">
+  <div>
+    <div class="card"><h2>Requirement details</h2>
+      <dl class="kv">
+        <dt>Buyer</dt><dd><%= revealed ? r.buyer_name : 'Confidential buyer' %> · <%= r.buyer_country %> <% if (r.buyer_verified==='verified') { %><span class="verified">✔ Verified buyer</span><% } %></dd>
+        <dt>Category</dt><dd><%= r.category %> (<%= r.industry %>)</dd>
+        <dt>Material / grade</dt><dd><%= r.material || '—' %> <%= r.grade || '' %></dd>
+        <dt>Quantity</dt><dd><b><%= h.num(r.quantity) %> <%= r.unit %></b></dd>
+        <dt>Target price</dt><dd><%= h.money(r.target_price, r.currency) %> / <%= r.unit %></dd>
+        <dt>Incoterm</dt><dd><%= r.incoterm %></dd>
+        <dt>Delivery</dt><dd><%= [r.delivery_location, r.delivery_country].filter(Boolean).join(", ") %></dd>
+        <dt>Required by</dt><dd><%= h.date(r.required_by) %></dd>
+        <dt>Quotation deadline</dt><dd><%= h.date(r.quote_deadline) %></dd>
+      </dl>
+      <h3 class="mt">Specifications</h3><p style="white-space:pre-wrap"><%= r.specifications || '—' %></p>
+      <% if (r.attachment) { %><% if (revealed && invite) { %><a class="btn btn-outline btn-sm" href="/files/requirement/<%= r.id %>">⬇ Download drawings / documents</a>
+      <% } else { %><div class="alert alert-info">🔒 Drawings are released after the buyer shortlists your quotation.</div><% } } %>
+      <% if (invite && invite.match_reasons) { %><p class="hint mt">Why you were matched: <%= invite.match_reasons %></p><% } %>
+    </div>
+    <div class="card"><h3>Questions for the buyer?</h3>
+      <% if (thread) { %><a class="btn btn-outline" href="/messages/<%= thread.id %>">Open conversation</a>
+      <% } else if (invite || quote) { %>
+      <form method="post" action="/messages/start/new"><input type="hidden" name="_csrf" value="<%= csrf %>">
+        <input type="hidden" name="to_company_id" value="<%= r.buyer_company_id %>"><input type="hidden" name="requirement_id" value="<%= r.id %>">
+        <input type="hidden" name="subject" value="<%= r.ref %> – technical clarification">
+        <textarea name="body" required placeholder="Ask a technical or commercial question…"></textarea><button class="btn btn-outline mt">Send question</button></form>
+      <% } else { %><p class="muted">Submit a quotation to start a conversation with the buyer.</p><% } %>
+    </div>
+  </div>
+  <div>
+    <div class="card">
+      <% if (quote && ['awarded','rejected','withdrawn'].includes(quote.status)) { %>
+        <h2>Your quotation</h2><p><%- include('../partials/badge', { s: quote.status }) %></p>
+        <% if (quote.status === 'awarded') { %><div class="alert alert-success">🎉 You won this RFQ. The buyer will share the PO; coordinate next steps in Messages.</div><% } %>
+        <dl class="kv"><dt>Unit price</dt><dd><%= h.money(quote.unit_price, quote.currency) %></dd><dt>Lead time</dt><dd><%= quote.lead_time_days %> days</dd></dl>
+      <% } else if (r.status !== 'open') { %>
+        <h2>Quotations closed</h2><p class="muted">This RFQ is <%= h.label(r.status).toLowerCase() %>.</p>
+      <% } else { const q = quote || { currency: r.currency, incoterm: r.incoterm, quantity: r.quantity }; %>
+        <h2><%= quote ? 'Update your quotation' : 'Submit quotation' %></h2>
+        <% if (quote) { %><p>Status: <%- include('../partials/badge', { s: quote.status }) %></p><% } %>
+        <form method="post" action="/rfq/<%= r.id %>/quote" enctype="multipart/form-data">
+          <input type="hidden" name="_csrf" value="<%= csrf %>">
+          <div class="grid g2">
+            <div class="field"><label>Unit price *</label><input type="number" step="any" min="0" name="unit_price" value="<%= q.unit_price || '' %>" required></div>
+            <div class="field"><label>Currency</label><select name="currency"><% h.CURRENCIES.forEach(c => { %><option <%= q.currency===c?'selected':'' %>><%= c %></option><% }) %></select></div>
+            <div class="field"><label>Quantity offered</label><input type="number" step="any" name="quantity" value="<%= q.quantity %>"></div>
+            <div class="field"><label>MOQ</label><input type="number" step="any" name="moq" value="<%= q.moq || '' %>"></div>
+            <div class="field"><label>Lead time (days) *</label><input type="number" name="lead_time_days" value="<%= q.lead_time_days || '' %>" required></div>
+            <div class="field"><label>Incoterm</label><select name="incoterm"><% h.INCOTERMS.forEach(i => { %><option <%= q.incoterm===i?'selected':'' %>><%= i %></option><% }) %></select></div>
+            <div class="field" style="grid-column:1/-1"><label>Payment terms *</label><input type="text" name="payment_terms" value="<%= q.payment_terms || '' %>" required placeholder="e.g. 30% advance, 70% against BL / LC at sight"></div>
+            <div class="field"><label>Valid until *</label><input type="date" name="validity_date" value="<%= q.validity_date || '' %>" min="<%= today %>" required></div>
+            <div class="field"><label>Quotation file</label><input type="file" name="attachment"></div>
+          </div>
+          <div class="field"><label>Notes / deviations / inclusions</label><textarea name="notes"><%= q.notes || '' %></textarea></div>
+          <button class="btn btn-primary btn-block btn-lg"><%= quote ? 'Update quotation' : 'Submit quotation' %></button>
+          <p class="hint">Quotations are checked for completeness by TradeWind before the buyer sees them.</p>
+        </form>
+      <% } %>
+    </div>
+  </div>
+</div>
+<%- include('../partials/app-end') %>

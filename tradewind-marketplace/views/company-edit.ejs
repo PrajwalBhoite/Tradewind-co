@@ -1,0 +1,64 @@
+<%- include('partials/app-start') %>
+<div class="page-h"><div><h1>Company profile</h1><p class="muted mb0">A complete, verified profile ranks higher in search and matching.</p></div>
+  <a class="btn btn-outline" href="/companies/<%= c.id %>" target="_blank">View public profile ↗</a></div>
+<div class="grid" style="grid-template-columns:2fr 1fr">
+<form method="post" action="/company/edit" enctype="multipart/form-data">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <fieldset><legend>Basics</legend>
+    <div class="grid g2">
+      <div class="field"><label>Company name *</label><input type="text" name="name" value="<%= c.name %>" required></div>
+      <div class="field"><label>Business type</label><select name="business_type"><% ['buyer','manufacturer','trader','distributor','stockist'].forEach(t => { %><option value="<%= t %>" <%= c.business_type===t?'selected':'' %>><%= t.charAt(0).toUpperCase()+t.slice(1) %></option><% }) %></select></div>
+    </div>
+    <div class="row" style="gap:24px;margin-bottom:14px">
+      <label class="check"><input type="checkbox" name="is_buyer" value="1" <%= c.is_buyer?'checked':'' %>> We buy / source</label>
+      <label class="check"><input type="checkbox" name="is_supplier" value="1" <%= c.is_supplier?'checked':'' %>> We supply / sell</label>
+    </div>
+    <div class="field"><label>About the company</label><textarea name="description" rows="4"><%= c.description || '' %></textarea></div>
+    <div class="field"><label>Logo</label><input type="file" name="logo" accept="image/*"></div>
+  </fieldset>
+  <fieldset><legend>Location & contact</legend>
+    <div class="grid g2">
+      <div class="field"><label>Country</label><select name="country"><% h.COUNTRIES.forEach(x => { %><option <%= c.country===x?'selected':'' %>><%= x %></option><% }) %></select></div>
+      <div class="field"><label>City</label><input type="text" name="city" value="<%= c.city || '' %>"></div>
+      <div class="field" style="grid-column:1/-1"><label>Business address</label><input type="text" name="address" value="<%= c.address || '' %>"></div>
+      <div class="field"><label>Website</label><input type="text" name="website" value="<%= c.website || '' %>"></div>
+      <div class="field"><label>Phone</label><input type="tel" name="phone" value="<%= c.phone || '' %>"></div>
+    </div>
+  </fieldset>
+  <fieldset><legend>Registration</legend>
+    <div class="grid g2">
+      <div class="field"><label>Company registration no. (CIN / Trade licence)</label><input type="text" name="reg_number" value="<%= c.reg_number || '' %>"></div>
+      <div class="field"><label>Tax ID (GST / VAT / EIN)</label><input type="text" name="tax_id" value="<%= c.tax_id || '' %>"></div>
+      <div class="field"><label>Year established</label><input type="number" name="year_established" value="<%= c.year_established || '' %>" min="1800" max="2100"></div>
+      <div class="field"><label>Employees</label><select name="employees"><% ['','1-10','10-50','50-200','200-500','500+'].forEach(e => { %><option <%= c.employees===e?'selected':'' %>><%= e %></option><% }) %></select></div>
+    </div>
+  </fieldset>
+  <fieldset><legend>Industries & capabilities</legend>
+    <div class="checks field"><% industries.forEach(i => { %><label class="check"><input type="checkbox" name="industries" value="<%= i %>" <%= (c.industries||'').includes(i)?'checked':'' %>> <%= i %></label><% }) %></div>
+    <div class="field"><label>Manufacturing / trading capabilities</label><textarea name="capabilities" rows="2" placeholder="e.g. Sand casting, CNC machining, heat treatment, ready stock of S355 plates"><%= c.capabilities || '' %></textarea></div>
+    <div class="grid g2">
+      <div class="field"><label>Production capacity</label><input type="text" name="production_capacity" value="<%= c.production_capacity || '' %>" placeholder="e.g. 1,200 MT / month"></div>
+      <div class="field"><label>Certifications</label><input type="text" name="certifications" value="<%= c.certifications || '' %>" placeholder="ISO 9001, IATF 16949, CE…"></div>
+    </div>
+  </fieldset>
+  <button class="btn btn-primary btn-lg">Save profile</button>
+</form>
+<div>
+  <div class="card"><h3>Verification</h3>
+    <p>Status: <%- include('partials/badge', { s: c.verification_status }) %></p>
+    <% if (c.verification_note) { %><div class="alert alert-info"><%= c.verification_note %></div><% } %>
+    <% if (c.verification_status === 'verified') { %><p class="verified">✔ Your company carries the Verified badge.</p>
+    <% } else { %>
+      <p class="muted" style="font-size:14px">Upload your certificate of incorporation, trade licence or GST certificate. Our team checks it against public registries.</p>
+      <form method="post" action="/company/verify" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <div class="field"><input type="file" name="doc" accept=".pdf,.jpg,.jpeg,.png"></div>
+        <button class="btn btn-navy btn-block"><%= c.verification_status === 'pending' ? 'Update documents' : 'Request verification' %></button>
+      </form>
+    <% } %>
+    <% if (c.verification_doc) { %><p class="hint mt"><a href="/files/verification/<%= c.id %>">View uploaded document</a></p><% } %>
+  </div>
+  <div class="card"><h3>Membership</h3><p>Current plan: <b style="text-transform:capitalize"><%= c.plan %></b></p><a class="btn btn-outline btn-block" href="/pricing">See plans</a></div>
+</div>
+</div>
+<%- include('partials/app-end') %>

@@ -1,0 +1,14 @@
+<%- include('../partials/app-start') %>
+<h1>My quotations</h1>
+<% if (!rows.length) { %><div class="card empty">You haven't submitted any quotations yet. <a href="/supplier/rfqs">Open your RFQ inbox</a>.</div><% } else { %>
+<div class="table-wrap"><table>
+  <tr><th>RFQ</th><th>Unit price</th><th>Lead time</th><th>Terms</th><th>Valid until</th><th>Status</th><th></th></tr>
+  <% rows.forEach(q => { %><tr>
+    <td><a href="/rfq/<%= q.requirement_id %>"><b><%= q.ref %></b> <%= q.title %></a><br><small>Submitted <%= h.ago(q.created_at) %></small></td>
+    <td><b><%= h.money(q.unit_price, q.currency) %></b></td><td><%= q.lead_time_days ? q.lead_time_days + ' days' : '—' %></td>
+    <td><small><%= q.incoterm %> · <%= q.payment_terms %></small></td><td><%= h.date(q.validity_date) %></td>
+    <td><%- include('../partials/badge', { s: q.status }) %></td>
+    <td><% if (['pending_review','submitted','shortlisted'].includes(q.status)) { %><form method="post" action="/quotes/<%= q.id %>/withdraw" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger btn-sm" data-confirm="Withdraw this quotation?">Withdraw</button></form><% } %></td>
+  </tr><% }) %>
+</table></div><% } %>
+<%- include('../partials/app-end') %>

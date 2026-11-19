@@ -1,0 +1,23 @@
+<%- include('../partials/app-start') %>
+<h1>Platform overview</h1>
+<div class="stats">
+  <div class="stat accent"><b><%= s.companies %></b><span>Companies (<%= s.buyers %> buyers · <%= s.suppliers %> suppliers)</span></div>
+  <div class="stat accent"><b><%= s.verified %></b><span>Verified companies</span></div>
+  <div class="stat accent"><b><%= s.products %></b><span>Product listings</span></div>
+  <div class="stat accent"><b><%= s.premium %></b><span>Paying members</span></div>
+  <div class="stat"><b><%= s.openRfqs %></b><span>Open RFQs</span></div>
+  <div class="stat"><b><%= s.quotes %></b><span>Quotations</span></div>
+  <div class="stat"><b><%= s.awarded %></b><span>Awarded RFQs</span></div>
+  <div class="stat"><b><%= s.quotes && s.openRfqs ? (s.quotes / Math.max(1, s.openRfqs + s.awarded)).toFixed(1) : 0 %></b><span>Avg quotes per RFQ</span></div>
+</div>
+<h2 class="mt2">Work queue</h2>
+<div class="grid g3">
+  <a class="card" href="/admin/companies?status=pending" style="color:inherit"><h3>🏢 Verification requests</h3><b style="font-size:30px;color:var(--orange)"><%= s.pendingVerify %></b><p class="muted mb0">Companies awaiting KYB review</p></a>
+  <a class="card" href="/admin/requirements" style="color:inherit;margin-top:0"><h3>📝 Requirements to screen</h3><b style="font-size:30px;color:var(--orange)"><%= s.pendingReqs %></b><p class="muted mb0">Approve to auto-distribute to matched suppliers</p></a>
+  <a class="card" href="/admin/quotes" style="color:inherit;margin-top:0"><h3>💬 Quotations to verify</h3><b style="font-size:30px;color:var(--orange)"><%= s.pendingQuotes %></b><p class="muted mb0">Check completeness before buyers see them</p></a>
+</div>
+<div class="grid g2 mt">
+  <div class="card"><h3>New registrations</h3><% newCos.forEach(c => { %><div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><a href="/admin/companies/<%= c.id %>"><%= c.name %></a><small><%= c.country %> · <%= h.ago(c.created_at) %></small></div><% }) %></div>
+  <div class="card" style="margin-top:0"><h3>Recent activity</h3><% recent.forEach(a => { %><div style="padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px"><b><%= a.name || 'System' %></b> · <%= a.action.replace(/_/g,' ') %> <%= a.detail || '' %> <small class="muted">· <%= h.ago(a.created_at) %></small></div><% }) %><% if (!recent.length) { %><p class="muted">No activity yet.</p><% } %></div>
+</div>
+<%- include('../partials/app-end') %>

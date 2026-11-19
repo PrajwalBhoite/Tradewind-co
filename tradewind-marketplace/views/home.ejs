@@ -1,0 +1,78 @@
+<%- include('partials/head') %>
+<section class="hero">
+  <div class="container">
+    <div>
+      <span class="eyebrow">Global B2B Buyer & Supplier Marketplace</span>
+      <h1>Where Global Demand Meets <em>Trusted Supply.</em></h1>
+      <p class="lead">Post requirements, get matched with verified manufacturers, traders and stockists, compare reviewed quotations and award with confidence — managed end-to-end by Crescendo Worldwide.</p>
+      <form class="searchbar" action="/search">
+        <select name="type" aria-label="Search type"><option value="products">Products</option><option value="suppliers">Suppliers</option></select>
+        <input type="search" name="q" placeholder="e.g. SG iron castings, gate valves, S355 plate…" aria-label="Search">
+        <button class="btn btn-primary">Search</button>
+      </form>
+      <div class="row" style="gap:12px;margin-bottom:18px">
+        <a class="btn btn-primary btn-lg" href="/requirements/new">Post a Requirement</a>
+        <a class="btn btn-outline btn-lg" href="/register?as=supplier" style="background:transparent;color:#fff;border-color:rgba(255,255,255,.35)">List Your Products</a>
+      </div>
+      <div class="chips"><small style="color:#9fb0cc;margin-right:6px">Sourcing across:</small>
+        <% industries.slice(0,7).forEach(i => { %><a class="pill" href="/search?type=suppliers&industry=<%= encodeURIComponent(i) %>"><%= i %></a><% }) %>
+      </div>
+    </div>
+    <div class="pipeline">
+      <h4>Live sourcing pipeline</h4>
+      <div class="step"><span class="n">1</span><span><b>RFQ posted</b> · 2,400 pcs SG iron brake discs</span><span class="st">Screened ✔</span></div>
+      <div class="step"><span class="n">2</span><span><b>Matched</b> · 12 verified foundries</span><span class="st">94% top match</span></div>
+      <div class="step"><span class="n">3</span><span><b>Quotations</b> · 5 received, reviewed</span><span class="st">Compliant ✔</span></div>
+      <div class="step"><span class="n">4</span><span><b>Negotiate & audit</b> · technical call booked</span><span class="st">In progress</span></div>
+      <div class="step"><span class="n">5</span><span><b>Award → PO → Pay</b></span><span class="st">Tracked</span></div>
+      <div class="ai-hint">💡 Suggestion: 2 suppliers hold ready stock within 10% of your target price.</div>
+    </div>
+  </div>
+</section>
+<div class="trust"><div class="container"><span>Verified suppliers (KYB)</span><span>Confidential RFQs & masked identity</span><span>Reviewed quotations</span><span>Smart supplier matching</span><span>Secure messaging</span></div></div>
+
+<section class="section"><div class="container">
+  <div class="stats">
+    <div class="stat accent"><b><%= stats.suppliers %></b><span>Suppliers & manufacturers</span></div>
+    <div class="stat accent"><b><%= stats.products %></b><span>Products & stock listings</span></div>
+    <div class="stat accent"><b><%= stats.rfqs %></b><span>Buyer requirements</span></div>
+    <div class="stat accent"><b><%= stats.countries %></b><span>Countries</span></div>
+  </div>
+</div></section>
+
+<section class="section" style="padding-top:0"><div class="container">
+  <div class="section-h"><h2>Not a directory. A managed sourcing workflow.</h2><p class="muted">Every step from requirement to award happens on the platform — screened, matched, documented.</p></div>
+  <div class="grid g3">
+    <div class="feature"><div class="ic">📝</div><h3>Post detailed requirements</h3><p>Product, material, grade, quantity, Incoterm, delivery port, target price and drawings — standard or confidential.</p></div>
+    <div class="feature"><div class="ic">🎯</div><h3>Smart supplier matching</h3><p>Scores suppliers on category, specs, material, grade, stock vs. quantity, MOQ, capability, location and verification.</p></div>
+    <div class="feature"><div class="ic">📦</div><h3>Live stock & capabilities</h3><p>Suppliers list ready stock, MOQ, lead times, certifications and production capacity — searchable worldwide.</p></div>
+    <div class="feature"><div class="ic">⚖️</div><h3>Compare reviewed quotes</h3><p>Side-by-side price, landed total, lead time, payment terms, validity and supplier trust score.</p></div>
+    <div class="feature"><div class="ic">🛡️</div><h3>Verification & masking</h3><p>Company KYB, verified badges, confidential buyer identity and drawings released only after shortlisting.</p></div>
+    <div class="feature"><div class="ic">💬</div><h3>Integrated communication</h3><p>RFQ-linked conversations and notifications keep every clarification on record.</p></div>
+  </div>
+</div></section>
+
+<section class="section" style="padding-top:0"><div class="container">
+  <div class="card-h"><h2>Featured products & ready stock</h2><a href="/search?type=products">View all →</a></div>
+  <% if (featured.length) { %><div class="cards"><% featured.forEach(p => { %><%- include('partials/pcard', { p }) %><% }) %></div>
+  <% } else { %><div class="card empty">No products yet — <a href="/register?as=supplier">be the first supplier to list</a>.</div><% } %>
+</div></section>
+
+<section class="section" style="padding-top:0"><div class="container">
+  <div class="card-h"><h2>Latest buyer requirements</h2><a href="/requirements">All requirements →</a></div>
+  <div class="table-wrap"><table>
+    <tr><th>Ref</th><th>Requirement</th><th>Quantity</th><th>Delivery</th><th>Quote by</th><th></th></tr>
+    <% latestRfqs.forEach(r => { %>
+      <tr><td><%= r.ref %></td><td><b><%= r.confidential ? 'Confidential requirement · ' + (r.category || '') : r.title %></b><br><small><%= r.category %></small></td>
+      <td><%= h.num(r.quantity) %> <%= r.unit %></td><td><%= r.delivery_country %> · <%= r.incoterm %></td><td><%= h.date(r.quote_deadline) %></td>
+      <td><% if (!r.confidential) { %><a class="btn btn-outline btn-sm" href="/rfq/<%= r.id %>">Quote now</a><% } else { %><small>🔒 Invited only</small><% } %></td></tr>
+    <% }) %>
+    <% if (!latestRfqs.length) { %><tr><td colspan="6" class="empty">No open requirements yet.</td></tr><% } %>
+  </table></div>
+</div></section>
+
+<section class="section" style="padding-top:0"><div class="container">
+  <div class="cta"><div><h2>Ready to source smarter — or sell to new markets?</h2><p style="color:#c9d5ea;margin:0">Free registration. Verified profiles. Genuine, screened requirements.</p></div>
+  <div class="row"><a class="btn btn-primary btn-lg" href="/register?as=buyer">I'm a Buyer</a><a class="btn btn-lg" style="background:#fff;color:var(--navy)" href="/register?as=supplier">I'm a Supplier</a></div></div>
+</div></section>
+<%- include('partials/foot') %>

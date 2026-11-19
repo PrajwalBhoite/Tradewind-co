@@ -1,0 +1,7 @@
+<%- include('../partials/app-start') %>
+<h1>Users</h1>
+<div class="table-wrap"><table><tr><th>Name</th><th>Email</th><th>Company</th><th>Role</th><th>Status</th><th>Last login</th><th></th></tr>
+<% rows.forEach(u => { %><tr><td><%= u.name %></td><td><%= u.email %></td><td><%= u.company %></td><td><%= u.role %></td><td><%- include('../partials/badge', { s: u.status }) %></td><td><small><%= u.last_login ? h.ago(u.last_login) : 'never' %></small></td>
+<td><% if (u.id !== user.id) { %><form method="post" action="/admin/users/<%= u.id %>" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-outline btn-sm" name="action" value="toggle"><%= u.status==='active'?'Suspend':'Activate' %></button> <button class="btn btn-ghost btn-sm" name="action" value="admin" data-confirm="Change admin rights for this user?"><%= u.role==='admin'?'Remove admin':'Make admin' %></button></form><% } %></td></tr><% }) %>
+</table></div>
+<%- include('../partials/app-end') %>

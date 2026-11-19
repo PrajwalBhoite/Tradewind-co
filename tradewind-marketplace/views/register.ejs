@@ -1,0 +1,39 @@
+<%- include('partials/head') %>
+<div class="auth-wrap wide"><div class="card">
+  <h1>Create your free business account</h1><p class="muted">One account for your company — buy, sell, or both.</p>
+  <% if (errors.length) { %><div class="alert alert-error"><% errors.forEach(e => { %><div><%= e %></div><% }) %></div><% } %>
+  <form method="post" action="/register">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label>I want to</label>
+    <div class="role-pick">
+      <label><input type="radio" name="as" value="buyer" <%= v.as==='buyer'?'checked':'' %>><span>Buy / Source</span><small>Post requirements & RFQs</small></label>
+      <label><input type="radio" name="as" value="supplier" <%= v.as==='supplier'?'checked':'' %>><span>Sell / Supply</span><small>List products & quote</small></label>
+      <label><input type="radio" name="as" value="both" <%= v.as==='both'?'checked':'' %>><span>Both</span><small>Buy and sell</small></label>
+    </div>
+    <fieldset><legend>Company</legend>
+      <div class="grid g2">
+        <div class="field"><label>Company name *</label><input type="text" name="company_name" value="<%= v.company_name || '' %>" required></div>
+        <div class="field"><label>Business type (suppliers)</label><select name="business_type">
+          <% ['manufacturer','trader','distributor','stockist'].forEach(t => { %><option value="<%= t %>" <%= v.business_type===t?'selected':'' %>><%= t.charAt(0).toUpperCase()+t.slice(1) %></option><% }) %></select></div>
+        <div class="field"><label>Country *</label><select name="country" required><option value="">Select…</option><% countries.forEach(c => { %><option <%= v.country===c?'selected':'' %>><%= c %></option><% }) %></select></div>
+        <div class="field"><label>City</label><input type="text" name="city" value="<%= v.city || '' %>"></div>
+        <div class="field"><label>Website</label><input type="text" name="website" value="<%= v.website || '' %>" placeholder="www.example.com"></div>
+        <div class="field"><label>Phone</label><input type="tel" name="phone" value="<%= v.phone || '' %>"></div>
+      </div>
+    </fieldset>
+    <fieldset><legend>Your login</legend>
+      <div class="grid g2">
+        <div class="field"><label>Full name *</label><input type="text" name="name" value="<%= v.name || '' %>" required></div>
+        <div class="field"><label>Designation</label><input type="text" name="designation" value="<%= v.designation || '' %>"></div>
+        <div class="field"><label>Business email *</label><input type="email" name="email" value="<%= v.email || '' %>" required autocomplete="username"></div>
+        <div></div>
+        <div class="field"><label>Password *</label><input type="password" name="password" required minlength="8" autocomplete="new-password"><div class="hint">8+ characters with letters and numbers</div></div>
+        <div class="field"><label>Confirm password *</label><input type="password" name="password2" required autocomplete="new-password"></div>
+      </div>
+    </fieldset>
+    <label class="check"><input type="checkbox" name="terms" value="1" <%= v.terms?'checked':'' %>> I agree to the Terms of Use and Privacy Policy, and confirm the information is accurate.</label>
+    <button class="btn btn-primary btn-lg btn-block mt">Create account</button>
+  </form>
+  <p class="mt muted" style="text-align:center">Already registered? <a href="/login">Log in</a></p>
+</div></div>
+<%- include('partials/foot') %>

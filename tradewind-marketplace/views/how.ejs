@@ -1,0 +1,15 @@
+<%- include('partials/head') %>
+<section class="section"><div class="container">
+  <div class="section-h"><span class="eyebrow">How it works</span><h1>From requirement to award — on one platform</h1></div>
+  <div class="split">
+    <div class="card"><h2>For Buyers</h2>
+      <% [['Register & build your profile','Free company registration with verification for credibility.'],['Post a requirement','Product, material, grade, quantity, Incoterm, delivery port, target price, drawings. Mark it confidential if needed.'],['We screen & match','Our team reviews the requirement and the matching engine sends it to the best-fit verified suppliers.'],['Receive reviewed quotations','Every quote is checked for completeness before you see it.'],['Compare, clarify, award','Compare side by side, message suppliers, shortlist and award.']].forEach((s,i) => { %>
+        <div class="row" style="align-items:flex-start;margin-bottom:14px"><span class="score" style="background:var(--orange)"><%= i+1 %></span><div><b><%= s[0] %></b><br><small><%= s[1] %></small></div></div><% }) %>
+      <a class="btn btn-primary" href="/register?as=buyer">Start sourcing</a></div>
+    <div class="card"><h2>For Suppliers</h2>
+      <% [['Register & get verified','Create your company profile, add certifications and capacity, upload registration documents.'],['List products & stock','Ready stock or made-to-order, MOQ, price, lead time and datasheets.'],['Receive matched RFQs','Get only requirements that fit your categories, materials and capabilities.'],['Submit quotations','Price, MOQ, lead time, payment & delivery terms and validity.'],['Win business','Get shortlisted, clarify technical points and receive the award.']].forEach((s,i) => { %>
+        <div class="row" style="align-items:flex-start;margin-bottom:14px"><span class="score"><%= i+1 %></span><div><b><%= s[0] %></b><br><small><%= s[1] %></small></div></div><% }) %>
+      <a class="btn btn-navy" href="/register?as=supplier">Start selling</a></div>
+  </div>
+</div></section>
+<%- include('partials/foot') %>

@@ -1,0 +1,61 @@
+<%- include('../partials/app-start') %>
+<div class="page-h"><div><small><%= r.ref %> · posted <%= h.ago(r.created_at) %></small><h1><%= r.title %></h1>
+  <div class="row"><%- include('../partials/badge', { s: r.status }) %><% if (r.confidential) { %><span class="badge b-pending">🔒 Confidential</span><% } %></div></div>
+  <div class="row">
+    <% if (quotes.length > 1) { %><a class="btn btn-navy" href="/my/requirements/<%= r.id %>/compare">⚖ Compare <%= quotes.length %> quotations</a><% } %>
+    <% if (['open','pending_review'].includes(r.status)) { %><form method="post" action="/my/requirements/<%= r.id %>/close"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger" data-confirm="Close this requirement? Suppliers will no longer be able to quote.">Close</button></form><% } %>
+  </div></div>
+<% if (r.status === 'pending_review') { %><div class="alert alert-info">⏳ Your requirement is being screened by the TradeWind team. Once approved it is sent automatically to the best-matched suppliers. You can already add suppliers below.</div><% } %>
+<% if (r.status === 'rejected') { %><div class="alert alert-error">This requirement needs changes: <%= r.admin_note || 'please contact support.' %></div><% } %>
+<% if (pendingQuotes) { %><div class="alert alert-info"><%= pendingQuotes %> more quotation<%= pendingQuotes>1?'s are':' is' %> being verified and will appear shortly.</div><% } %>
+
+<div class="card"><div class="card-h"><h2>Quotations (<%= quotes.length %>)</h2></div>
+  <% if (!quotes.length) { %><div class="empty">No quotations yet. Matched suppliers have been notified.</div><% } else { %>
+  <div class="table-wrap"><table>
+    <tr><th>Supplier</th><th>Unit price</th><th>Total</th><th>Lead time</th><th>MOQ</th><th>Terms</th><th>Valid until</th><th>Status</th><th>Actions</th></tr>
+    <% quotes.forEach(q => { %><tr>
+      <td><a href="/companies/<%= q.supplier_company_id %>"><b><%= q.supplier %></b></a><br><small><%= q.country %></small> <% if (q.verification_status==='verified') { %><span class="verified">✔</span><% } %></td>
+      <td><b><%= h.money(q.unit_price, q.currency) %></b><% if (r.target_price && q.currency===r.currency) { const d = (q.unit_price - r.target_price) / r.target_price * 100; %><br><small style="color:<%= d<=0 ? 'var(--green)' : 'var(--red)' %>"><%= d<=0 ? '' : '+' %><%= d.toFixed(1) %>% vs target</small><% } %></td>
+      <td><%= h.money(q.unit_price * r.quantity, q.currency) %></td><td><%= q.lead_time_days ? q.lead_time_days + ' d' : '—' %></td><td><%= h.num(q.moq) %></td>
+      <td><small><%= q.incoterm %><br><%= q.payment_terms %></small></td><td><%= h.date(q.validity_date) %></td>
+      <td><%- include('../partials/badge', { s: q.status }) %></td>
+      <td style="white-space:nowrap">
+        <% if (r.status==='open' && ['submitted','shortlisted'].includes(q.status)) { %>
+          <% if (q.status==='submitted') { %><form method="post" action="/quotes/<%= q.id %>/shortlist" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-outline btn-sm">Shortlist</button></form><% } %>
+          <form method="post" action="/quotes/<%= q.id %>/award" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-green btn-sm" data-confirm="Award this RFQ to <%= q.supplier %>? Other quotations will be declined.">Award</button></form>
+          <form method="post" action="/quotes/<%= q.id %>/reject" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger btn-sm">✕</button></form>
+        <% } %>
+        <% if (q.attachment) { %><a class="btn btn-ghost btn-sm" href="/files/quote/<%= q.id %>">⬇ File</a><% } %>
+        <form method="post" action="/messages/start/new" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="to_company_id" value="<%= q.supplier_company_id %>"><input type="hidden" name="requirement_id" value="<%= r.id %>"><input type="hidden" name="subject" value="<%= r.ref %> – quotation discussion"><button class="btn btn-ghost btn-sm">✉ Message</button></form>
+      </td></tr>
+      <% if (q.notes) { %><tr><td></td><td colspan="8"><small><b>Supplier notes:</b> <%= q.notes %></small></td></tr><% } %>
+    <% }) %>
+  </table></div><% } %>
+</div>
+
+<div class="grid mt" style="grid-template-columns:1fr 1fr">
+  <div class="card"><h3>Requirement details</h3>
+    <dl class="kv"><dt>Category</dt><dd><%= r.category %></dd><dt>Material / grade</dt><dd><%= r.material || '—' %> <%= r.grade || '' %></dd>
+      <dt>Quantity</dt><dd><%= h.num(r.quantity) %> <%= r.unit %></dd><dt>Target price</dt><dd><%= h.money(r.target_price, r.currency) %></dd>
+      <dt>Incoterm</dt><dd><%= r.incoterm %></dd><dt>Delivery</dt><dd><%= [r.delivery_location, r.delivery_country].filter(Boolean).join(", ") %></dd>
+      <dt>Required by</dt><dd><%= h.date(r.required_by) %></dd><dt>Quote deadline</dt><dd><%= h.date(r.quote_deadline) %></dd></dl>
+    <p class="mt" style="white-space:pre-wrap"><%= r.specifications %></p>
+    <% if (r.attachment) { %><a class="btn btn-outline btn-sm" href="/files/requirement/<%= r.id %>">⬇ Attachment</a><% } %>
+  </div>
+  <div class="card"><h3>Suppliers on this RFQ (<%= invites.length %>)</h3>
+    <% if (!invites.length) { %><p class="muted">Suppliers will be added when the RFQ is approved.</p><% } %>
+    <% invites.forEach(i => { %><div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)">
+      <div><a href="/companies/<%= i.supplier_company_id %>"><%= i.supplier %></a> <% if (i.verification_status==='verified') { %><span class="verified">✔</span><% } %><br><small><%= i.country %> · <%= i.source %></small></div>
+      <div class="row"><% if (i.match_score) { %><span class="score"><%= i.match_score %>%</span><% } %><%- include('../partials/badge', { s: i.status }) %></div></div><% }) %>
+  </div>
+</div>
+
+<% if (suggestions.length) { %>
+<div class="card mt"><div class="card-h"><div><h3 class="mb0">More suggested suppliers</h3><small class="muted">Ranked by the matching engine — invite any you'd like to hear from.</small></div></div>
+  <div class="table-wrap"><table><tr><th>Supplier</th><th>Match</th><th>Why</th><th></th></tr>
+  <% suggestions.forEach(m => { %><tr><td><a href="/companies/<%= m.company.id %>"><b><%= m.company.name %></b></a><br><small><%= m.company.country %></small></td>
+    <td><span class="score"><%= m.score %>%</span></td><td><small><%= m.reasons.join(' · ') %></small></td>
+    <td><form method="post" action="/my/requirements/<%= r.id %>/invite"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="supplier_company_id" value="<%= m.company.id %>"><input type="hidden" name="score" value="<%= m.score %>"><button class="btn btn-outline btn-sm">+ Invite</button></form></td></tr><% }) %>
+  </table></div>
+</div><% } %>
+<%- include('../partials/app-end') %>

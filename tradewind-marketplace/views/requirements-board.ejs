@@ -1,0 +1,23 @@
+<%- include('partials/head') %>
+<div class="container" style="padding-top:28px">
+  <div class="page-h"><div><h1>Live Buyer Requirements</h1><p class="muted mb0">Screened, genuine requirements from buyers worldwide. Suppliers can view details and quote after logging in.</p></div>
+    <a class="btn btn-primary" href="/requirements/new">Post your requirement</a></div>
+  <div class="mb0" style="margin-bottom:16px"><a class="pill" href="/requirements">All</a><% industries.forEach(i => { %><a class="pill" style="<%= industry===i ? 'border-color:var(--orange)' : '' %>" href="/requirements?industry=<%= encodeURIComponent(i) %>"><%= i %></a><% }) %></div>
+  <div class="table-wrap"><table>
+    <tr><th>Ref</th><th>Requirement</th><th>Quantity</th><th>Target price</th><th>Delivery</th><th>Quote by</th><th>Quotes</th><th></th></tr>
+    <% rows.forEach(r => { %>
+    <tr>
+      <td><%= r.ref %><br><small><%= h.ago(r.created_at) %></small></td>
+      <td><b><%= r.confidential ? 'Confidential requirement' : r.title %></b><br><small><%= r.category %> · <%= r.industry %></small>
+        <% if (r.confidential) { %><br><span class="badge b-pending">🔒 Invited suppliers only</span><% } %></td>
+      <td><%= h.num(r.quantity) %> <%= r.unit %></td>
+      <td><%= r.confidential ? '—' : h.money(r.target_price, r.currency) %></td>
+      <td><%= r.buyer_country %><br><small><%= r.incoterm %></small></td>
+      <td><%= h.date(r.quote_deadline) %></td>
+      <td><%= r.quote_count %></td>
+      <td><% if (!r.confidential) { %><a class="btn btn-outline btn-sm" href="/rfq/<%= r.id %>">View & quote</a><% } %></td>
+    </tr><% }) %>
+    <% if (!rows.length) { %><tr><td colspan="8" class="empty">No open requirements in this industry right now.</td></tr><% } %>
+  </table></div>
+</div>
+<%- include('partials/foot') %>

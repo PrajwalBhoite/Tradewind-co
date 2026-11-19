@@ -1,0 +1,9 @@
+<%- include('partials/app-start') %>
+<h1>Messages</h1>
+<div class="card">
+  <% if (!rows.length) { %><div class="empty">No conversations yet. Contact suppliers from their profile or product pages, or discuss RFQs from the RFQ page.</div><% } %>
+  <% rows.forEach(t => { %><a href="/messages/<%= t.id %>" style="display:block;padding:14px 4px;border-bottom:1px solid var(--line);color:var(--ink)">
+    <div class="row between"><b><%= t.other %></b><small><%= h.ago(t.updated_at) %></small></div>
+    <div style="color:var(--navy)"><%= t.subject %></div><small><%= (t.last_body || '').slice(0, 120) %></small></a><% }) %>
+</div>
+<%- include('partials/app-end') %>
