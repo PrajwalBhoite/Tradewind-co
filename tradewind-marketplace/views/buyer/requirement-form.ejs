@@ -1,5 +1,5 @@
 <%- include('../partials/app-start') %>
-<h1>Post a requirement</h1>
+<div class="page-h"><h1>Post a requirement</h1><a class="btn btn-outline" href="/confidential/new">🔒 Need an NDA? Confidential RFQ →</a></div>
 <p class="muted">The more precise your details, the better the supplier matches. Our team screens each requirement before it is distributed.</p>
 <form method="post" action="/requirements/new" enctype="multipart/form-data" style="max-width:920px">
   <input type="hidden" name="_csrf" value="<%= csrf %>">
@@ -30,7 +30,7 @@
       <div class="field"><label>Required delivery date</label><input type="date" name="required_by"></div>
       <div class="field"><label>Quotation deadline</label><input type="date" name="quote_deadline"></div>
     </div>
-    <label class="check"><input type="checkbox" name="confidential" value="1"> <span><b>Confidential sourcing</b> — hide my company name, target price and drawings from suppliers until I shortlist them. Not shown on the public board.</span></label>
+    <div class="alert alert-info">🔒 Sensitive drawings? Use <a href="/confidential/new"><b>Confidential sourcing</b></a> instead — share only basics, shortlist verified suppliers and release drawings only after an NDA is signed by both parties.</div>
   </fieldset>
   <button class="btn btn-primary btn-lg">Submit requirement</button>
 </form>

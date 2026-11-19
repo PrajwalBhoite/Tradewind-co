@@ -28,19 +28,30 @@ router.get('/dashboard', H.requireLogin, (req, res) => {
     d.supStats = {
       products: get("SELECT COUNT(*) n FROM products WHERE company_id=?", c.id).n,
       stock: get("SELECT COUNT(*) n FROM products WHERE company_id=? AND availability='ready_stock' AND stock_qty>0", c.id).n,
-      rfqs: get("SELECT COUNT(*) n FROM rfq_invites i JOIN requirements r ON r.id=i.requirement_id WHERE i.supplier_company_id=? AND r.status='open'", c.id).n,
+      rfqs: get("SELECT COUNT(*) n FROM rfq_invites i JOIN requirements r ON r.id=i.requirement_id WHERE i.supplier_company_id=? AND r.status='open' AND i.status!='proposed' AND (r.sourcing_type!='confidential' OR i.released=1)", c.id).n,
+      ndas: get("SELECT COUNT(*) n FROM nda_agreements WHERE supplier_company_id=? AND status='sent'", c.id).n,
       quotes: get('SELECT COUNT(*) n FROM quotations WHERE supplier_company_id=?', c.id).n,
       won: get("SELECT COUNT(*) n FROM quotations WHERE supplier_company_id=? AND status='awarded'", c.id).n,
       views: get('SELECT COALESCE(SUM(views),0) n FROM products WHERE company_id=?', c.id).n,
     };
     d.invites = all(`SELECT i.*, r.title, r.ref, r.quantity, r.unit, r.quote_deadline, r.delivery_country, r.confidential FROM rfq_invites i
                   JOIN requirements r ON r.id=i.requirement_id WHERE i.supplier_company_id=? AND r.status='open'
+                  AND i.status!='proposed' AND (r.sourcing_type!='confidential' OR i.released=1)
                   ORDER BY i.created_at DESC LIMIT 6`, c.id);
   }
   d.threads = all(`SELECT t.*, CASE WHEN t.company_a=? THEN cb.name ELSE ca.name END other FROM threads t
                   JOIN companies ca ON ca.id=t.company_a JOIN companies cb ON cb.id=t.company_b
                   WHERE t.company_a=? OR t.company_b=? ORDER BY t.updated_at DESC LIMIT 4`, c.id, c.id, c.id);
   d.completeness = profileCompleteness(c);
+  if (c.is_buyer) d.cs = all(`SELECT r.id, r.ref, r.title, r.status,
+      (SELECT COUNT(*) FROM nda_agreements n WHERE n.requirement_id=r.id AND n.status='supplier_signed') to_countersign
+      FROM requirements r WHERE r.buyer_company_id=? AND r.sourcing_type='confidential' AND r.status IN ('pending_review','open') ORDER BY r.created_at DESC LIMIT 5`, c.id);
+  const TZ = require('../lib/tz');
+  d.meetings = all(`SELECT m.*, CASE WHEN m.requester_company_id=? THEN b.name ELSE a.name END other FROM meetings m
+      JOIN companies a ON a.id=m.requester_company_id JOIN companies b ON b.id=m.with_company_id
+      WHERE (m.requester_company_id=? OR m.with_company_id=?) AND m.status IN ('requested','coordinated','confirmed','rescheduled')
+      ORDER BY m.start_utc LIMIT 5`, c.id, c.id, c.id);
+  d.tz = TZ.validTz(req.user.timezone); d.TZ = TZ;
   res.render('dashboard', { title: 'Dashboard', d });
 });
 
@@ -92,7 +103,7 @@ router.get('/notifications', H.requireLogin, (req, res) => {
 });
 
 // ---------- Account / password ----------
-router.get('/account', H.requireLogin, (req, res) => res.render('account', { title: 'My account' }));
+router.get('/account', H.requireLogin, (req, res) => res.render('account', { title: 'My account', zones: require('../lib/tz').ZONES }));
 router.post('/account', H.requireLogin, (req, res) => {
   const v = req.body;
   if (v.new_password) {
@@ -100,7 +111,8 @@ router.post('/account', H.requireLogin, (req, res) => {
     if (v.new_password.length < 8) { H.flash(req, 'error', 'New password must be at least 8 characters.'); return res.redirect('/account'); }
     run('UPDATE users SET password_hash=? WHERE id=?', bcrypt.hashSync(v.new_password, 11), req.user.id);
   }
-  run('UPDATE users SET name=?, phone=?, designation=? WHERE id=?', v.name || req.user.name, v.phone || '', v.designation || '', req.user.id);
+  run('UPDATE users SET name=?, phone=?, designation=?, timezone=? WHERE id=?', v.name || req.user.name, v.phone || '', v.designation || '',
+    require('../lib/tz').validTz(v.timezone || req.user.timezone), req.user.id);
   H.flash(req, 'success', 'Account updated.');
   res.redirect('/account');
 });

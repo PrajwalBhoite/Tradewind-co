@@ -7,7 +7,7 @@
     <td><%= r.ref %></td><td><b><%= r.title %></b> <%= r.confidential ? '🔒' : '' %><br><small><%= r.category %></small></td>
     <td><%= h.num(r.quantity) %> <%= r.unit %></td><td><%- include('../partials/badge', { s: r.status }) %></td>
     <td><%= r.invited %></td><td><b><%= r.quotes %></b></td><td><%= h.date(r.quote_deadline) %></td>
-    <td><a class="btn btn-outline btn-sm" href="/my/requirements/<%= r.id %>">Manage</a></td>
+    <td><a class="btn btn-outline btn-sm" href="<%= r.sourcing_type==='confidential' ? '/confidential/' : '/my/requirements/' %><%= r.id %>">Manage</a></td>
   </tr><% }) %>
 </table></div><% } %>
 <%- include('../partials/app-end') %>

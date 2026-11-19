@@ -1,0 +1,13 @@
+<%- include('../partials/head') %>
+<div class="container" style="padding:20px">
+  <div class="row between"><div><small class="muted">Secure drawing vault · <%= f.ref %></small><h2 class="mb0">🔒 <%= f.original_name %></h2></div>
+    <div class="row"><% if (owner || f.allow_download) { %><a class="btn btn-outline btn-sm" href="/vault/<%= f.id %>/raw?download=1">⬇ Download original</a><% } else { %><span class="badge">View-only · download disabled</span><% } %></div></div>
+  <p class="muted" style="font-size:13px">This document is confidential under the NDA signed by both parties. Every view is logged with your name, company, time and IP address.</p>
+  <div class="vault-frame">
+    <% if (kind === 'img') { %><img src="/vault/<%= f.id %>/raw" alt="" draggable="false">
+    <% } else if (kind === 'pdf') { %><iframe src="/vault/<%= f.id %>/raw#toolbar=0&navpanes=0" title="Drawing"></iframe>
+    <% } else { %><div class="empty" style="padding:80px 20px">Preview isn't available for this file type (CAD/Office).<br><% if (owner || f.allow_download) { %>Use “Download original”.<% } else { %>Ask the buyer to allow downloads, or request a PDF version via Messages.<% } %></div><% } %>
+    <% if (!owner) { %><div class="wm"><% for (let i = 0; i < 40; i++) { %><span><%= mark %></span><% } %></div><% } %>
+  </div>
+</div>
+<script src="/static/js/app.js"></script></body></html>

@@ -32,8 +32,8 @@ router.post('/register', (req, res) => {
   const btype = isSupplier ? (v.business_type || 'manufacturer') : 'buyer';
   const c = run(`INSERT INTO companies(name,business_type,is_buyer,is_supplier,country,city,website,phone) VALUES(?,?,?,?,?,?,?,?)`,
     v.company_name.trim(), btype, isBuyer, isSupplier, v.country, v.city || '', v.website || '', v.phone || '');
-  const u = run('INSERT INTO users(email,password_hash,name,phone,designation,company_id) VALUES(?,?,?,?,?,?)',
-    email, bcrypt.hashSync(v.password, 11), v.name.trim(), v.phone || '', v.designation || '', c.lastInsertRowid);
+  const u = run('INSERT INTO users(email,password_hash,name,phone,designation,company_id,timezone) VALUES(?,?,?,?,?,?,?)',
+    email, bcrypt.hashSync(v.password, 11), v.name.trim(), v.phone || '', v.designation || '', c.lastInsertRowid, require('../lib/tz').validTz(v.tz));
   notifyAdmins(`New ${as} registration: ${v.company_name} (${v.country})`, `/admin/companies/${c.lastInsertRowid}`);
   log(u.lastInsertRowid, 'register', v.company_name);
   req.session.regenerate(() => {
@@ -63,6 +63,7 @@ router.post('/login', (req, res) => {
   req.session.regenerate(() => {
     req.session.userId = u.id;
     run("UPDATE users SET last_login = datetime('now') WHERE id=?", u.id);
+    if (req.body.tz && u.timezone === 'UTC') run('UPDATE users SET timezone=? WHERE id=?', require('../lib/tz').validTz(req.body.tz), u.id);
     res.redirect(back && back.startsWith('/') && !back.startsWith('//') ? back : (u.role === 'admin' ? '/admin' : '/dashboard'));
   });
 });

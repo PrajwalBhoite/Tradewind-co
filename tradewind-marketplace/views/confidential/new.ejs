@@ -1,0 +1,51 @@
+<%- include('../partials/app-start') %>
+<small class="muted">Requirements / Confidential sourcing</small>
+<div class="page-h"><div><h1>Confidential sourcing — basic requirement</h1><p class="muted mb0">Share only non-confidential details first. Drawings stay with you until an NDA is signed by both parties.</p></div><span class="badge b-premium">★ Premium</span></div>
+<% const stage = 1; %><%- include('../partials/cs-steps', { stage: 1 }) %>
+<form method="post" action="/confidential/new" enctype="multipart/form-data">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="grid" style="grid-template-columns:1.25fr 1fr;align-items:start">
+    <fieldset><legend>① Product overview <small class="muted">— no drawings at this stage</small></legend>
+      <div class="grid g2">
+        <div class="field"><label>Product name *</label><input type="text" name="title" required placeholder="e.g. Ductile iron gearbox housing"></div>
+        <div class="field"><label>Category *</label><select name="category_id" required><option value="">Select…</option>
+          <% Object.entries(cats).forEach(([ind, list]) => { %><optgroup label="<%= ind %>"><% list.forEach(c => { %><option value="<%= c.id %>"><%= c.name %></option><% }) %></optgroup><% }) %></select></div>
+      </div>
+      <div class="field"><label>Brief description (non-confidential) *</label><textarea name="description" rows="2" required placeholder="e.g. Split gearbox housing for a heavy-duty drive unit; machined bearing bores."></textarea></div>
+      <div class="grid g2">
+        <div class="field"><label>Material & grade *</label><input type="text" name="material" required placeholder="e.g. Ductile iron"><input type="text" name="grade" placeholder="Grade, e.g. EN-GJS-500-7" style="margin-top:6px"></div>
+        <div class="field"><label>Approx. weight per piece (kg)</label><input type="number" step="any" min="0" name="weight_per_piece"></div>
+      </div>
+      <div class="field"><label>Manufacturing process *</label><div class="chips-check"><% processes.forEach(p => { %><label><input type="checkbox" name="process" value="<%= p %>"><span><%= p %></span></label><% }) %></div></div>
+      <div class="grid g2">
+        <div class="field"><label>Approx. size envelope</label><input type="text" name="size_envelope" placeholder="620 × 480 × 350 mm"></div>
+        <div class="field"><label>Required certifications</label><input type="text" name="certs_required" placeholder="ISO 9001, EN 10204 3.1"></div>
+      </div>
+    </fieldset>
+    <div>
+      <fieldset><legend>② Quantity & commercial</legend>
+        <div class="grid g2">
+          <div class="field"><label>Annual quantity *</label><input type="number" step="any" min="0" name="annual_qty" required></div>
+          <div class="field"><label>Batch quantity *</label><input type="number" step="any" min="0" name="batch_qty" required></div>
+          <div class="field"><label>Unit</label><select name="unit"><% h.UNITS.forEach(u => { %><option><%= u %></option><% }) %></select></div>
+          <div class="field"><label>Target price / unit</label><div class="row" style="flex-wrap:nowrap;gap:6px"><input type="number" step="any" min="0" name="target_price"><select name="currency" style="width:90px"><% h.CURRENCIES.forEach(c => { %><option><%= c %></option><% }) %></select></div></div>
+          <div class="field"><label>Incoterms *</label><select name="incoterm"><% h.INCOTERMS.forEach(i => { %><option <%= i==='CIF'?'selected':'' %>><%= i %></option><% }) %></select></div>
+          <div class="field"><label>Named port / delivery location *</label><input type="text" name="delivery_location" required placeholder="Hamburg"></div>
+          <div class="field"><label>Delivery country</label><select name="delivery_country"><% h.COUNTRIES.forEach(c => { %><option <%= company.country===c?'selected':'' %>><%= c %></option><% }) %></select></div>
+          <div class="field"><label>Quotation deadline</label><input type="date" name="quote_deadline"></div>
+        </div>
+        <div class="field"><label>Preferred supplier countries</label><div class="checks" style="max-height:120px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:8px">
+          <% ['India','Türkiye','China','Vietnam','Germany','Italy','United Arab Emirates','Thailand','Poland','Mexico'].forEach(c => { %><label class="check"><input type="checkbox" name="preferred_countries" value="<%= c === 'Türkiye' ? 'Turkey' : c %>"> <%= c %></label><% }) %></div></div>
+        <label class="check"><input type="checkbox" name="share_target_price" value="1" checked> Share target price with shortlisted suppliers</label>
+      </fieldset>
+      <fieldset class="vault-box"><legend>🔒 Drawings & confidential documents</legend>
+        <p style="font-size:14px">Withheld. You upload them later to the <b>secure drawing vault</b>; they are released <b>only to suppliers whose NDA is signed by both parties</b>.</p>
+        <label class="check"><input type="radio" name="nda_mode" value="standard" checked> <span>Use the <b>TradeWind standard mutual NDA</b> (<a href="/nda-template" target="_blank">preview</a>)</span></label>
+        <label class="check"><input type="radio" name="nda_mode" value="own"> <span>Use <b>my company NDA</b></span></label>
+        <div class="field mt"><input type="file" name="nda_file" accept=".pdf,.doc,.docx"><div class="hint">Required if using your own NDA.</div></div>
+      </fieldset>
+    </div>
+  </div>
+  <div class="row" style="justify-content:flex-end"><a class="btn btn-outline" href="/confidential">Cancel</a><button class="btn btn-primary btn-lg">🛡 Submit for confidential matching</button></div>
+</form>
+<%- include('../partials/app-end') %>

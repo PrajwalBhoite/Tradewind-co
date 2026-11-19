@@ -1,0 +1,8 @@
+<%- include('../partials/app-start') %>
+<h1>Meetings coordination</h1>
+<p class="muted">All buyer–supplier meeting requests. Help align time zones, add meeting links and confirm.</p>
+<div class="card">
+  <% if (!meetings.length) { %><div class="empty">No meetings yet.</div><% } %>
+  <% const zones = TZ.ZONES; meetings.forEach(m => { %><%- include('../partials/meeting-card', { m, myTurn: true, isAdmin: true, viewTz: TZ.validTz(user.timezone), zones }) %><% }) %>
+</div>
+<%- include('../partials/app-end') %>

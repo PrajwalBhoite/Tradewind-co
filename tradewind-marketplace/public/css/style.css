@@ -47,7 +47,7 @@ details.menu{position:relative} details.menu summary{list-style:none;cursor:poin
 .btn-block{width:100%}
 form.inline{display:inline}
 label{display:block;font-weight:600;font-size:13.5px;margin:0 0 6px;color:var(--navy)}
-input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],input[type=url],input[type=tel],input[type=search],select,textarea{
+input[type=text],input[type=email],input[type=password],input[type=number],input[type=date],input[type=time],input[type=url],input[type=tel],input[type=search],select,textarea{
   width:100%;padding:10px 12px;border:1px solid #cfd7e3;border-radius:9px;font:inherit;background:#fff;color:var(--ink)}
 input:focus,select:focus,textarea:focus{outline:2px solid rgba(31,111,209,.25);border-color:var(--blue)}
 textarea{min-height:96px;resize:vertical}
@@ -202,3 +202,39 @@ footer.site .bottom{border-top:1px solid rgba(255,255,255,.12);margin-top:28px;p
   .kv{grid-template-columns:1fr} .msg{max-width:90%}
   .hdr-right .hide-sm{display:none}
 }
+
+/* ---- Confidential sourcing ---- */
+.steps{display:flex;align-items:center;background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:16px 20px;margin-bottom:20px;gap:10px;overflow-x:auto}
+.steps .st{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--muted);white-space:nowrap;font-size:14px}
+.steps .c{width:28px;height:28px;border-radius:50%;border:2px solid #cfd7e3;display:flex;align-items:center;justify-content:center;font-size:13px;background:#fff}
+.steps .st.done{color:var(--navy)} .steps .st.done .c{background:var(--green);border-color:var(--green);color:#fff}
+.steps .st.cur{color:var(--orange-d)} .steps .st.cur .c{background:var(--orange);border-color:var(--orange);color:#fff}
+.steps .ln{flex:1;min-width:24px;height:2px;background:#dfe5ee} .steps .ln.done{background:var(--green)}
+.chips-check{display:flex;flex-wrap:wrap;gap:8px}
+.chips-check label{margin:0;font-weight:500;cursor:pointer}
+.chips-check input{display:none}
+.chips-check span{display:inline-block;padding:6px 14px;border:1px solid var(--line);border-radius:20px;background:#fff;font-size:13.5px}
+.chips-check input:checked + span{background:#fff1e8;border-color:var(--orange);color:var(--orange-d)}
+.chips-check input:checked + span::before{content:"✓ "}
+fieldset.vault-box{border:1.5px dashed var(--orange);background:#fffaf6}
+.b-nda-sent{background:var(--blue-bg);color:var(--blue)} .b-nda-supplier_signed{background:var(--amber-bg);color:var(--amber)}
+.b-nda-signed_both{background:var(--green-bg);color:var(--green)} .b-nda-declined{background:var(--red-bg);color:var(--red)}
+.b-proposed{background:#eef1f5;color:#556}
+.nda-row{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.countersign{display:grid;gap:6px;min-width:260px;max-width:320px;background:#fafbfd;border:1px solid var(--line);border-radius:10px;padding:10px}
+.tracker div{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px}
+.release-card{border:2px solid var(--orange)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.vault-frame{position:relative;background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;min-height:70vh;user-select:none}
+.vault-frame img{display:block;max-width:100%;margin:0 auto;pointer-events:none}
+.vault-frame iframe{width:100%;height:78vh;border:0;display:block}
+.wm{position:absolute;inset:-50%;display:flex;flex-wrap:wrap;gap:60px 80px;transform:rotate(-24deg);pointer-events:none;align-content:center;justify-content:center}
+.wm span{color:rgba(194,65,45,.16);font-weight:700;font-size:15px;white-space:nowrap}
+
+/* ---- Meetings ---- */
+.meet{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px;background:#fff}
+.meet-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start;margin-top:10px}
+details.inline-form{display:inline-block} details.inline-form[open]{display:block;width:100%;background:#fafbfd;border:1px solid var(--line);border-radius:10px;padding:10px}
+details.inline-form summary{list-style:none} details.inline-form summary::-webkit-details-marker{display:none}
+.b-m-requested,.b-m-rescheduled{background:var(--amber-bg);color:var(--amber)} .b-m-coordinated{background:var(--blue-bg);color:var(--blue)}
+.b-m-confirmed{background:var(--green-bg);color:var(--green)} .b-m-completed{background:#eef1f5;color:#445} .b-m-cancelled{background:var(--red-bg);color:var(--red)}

@@ -1,0 +1,6 @@
+<div class="steps">
+  <% ['Basic requirement','Supplier profiles','Shortlist','NDA signed','RFQ released'].forEach((s, i) => { const n = i + 1; %>
+    <div class="st <%= n < stage ? 'done' : n === stage ? 'cur' : '' %>"><span class="c"><%= n < stage ? '✓' : n %></span><span><%= s %></span></div>
+    <% if (n < 5) { %><div class="ln <%= n < stage ? 'done' : '' %>"></div><% } %>
+  <% }) %>
+</div>

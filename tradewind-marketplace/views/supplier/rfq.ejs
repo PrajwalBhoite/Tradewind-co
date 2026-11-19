@@ -18,10 +18,15 @@
         <dt>Quotation deadline</dt><dd><%= h.date(r.quote_deadline) %></dd>
       </dl>
       <h3 class="mt">Specifications</h3><p style="white-space:pre-wrap"><%= r.specifications || '—' %></p>
+      <% if (vault.length) { %><h3 class="mt">🔒 Secure drawing vault</h3><p class="hint">View-only, watermarked with your company name. Every access is logged under the NDA.</p>
+        <% vault.forEach(f => { %><div style="padding:6px 0"><a class="btn btn-outline btn-sm" href="/vault/<%= f.id %>" target="_blank">📄 <%= f.original_name %></a></div><% }) %><% } %>
+      <% if (r.sourcing_type === 'confidential') { %><p class="hint mt">NDA signed by both parties · <a href="/nda/<%= r.id %>/document" target="_blank">view NDA</a></p><% } %>
       <% if (r.attachment) { %><% if (revealed && invite) { %><a class="btn btn-outline btn-sm" href="/files/requirement/<%= r.id %>">⬇ Download drawings / documents</a>
       <% } else { %><div class="alert alert-info">🔒 Drawings are released after the buyer shortlists your quotation.</div><% } } %>
       <% if (invite && invite.match_reasons) { %><p class="hint mt">Why you were matched: <%= invite.match_reasons %></p><% } %>
     </div>
+    <div class="card"><div class="row between"><h3 class="mb0">Need a call with the buyer?</h3><a class="btn btn-navy btn-sm" href="/meetings?rfq=<%= r.id %>&with=<%= r.buyer_company_id %>">🤝 Request meeting</a></div>
+      <p class="hint">Technical or commercial discussion on Zoom, Microsoft Teams or Google Meet — TradeWind helps coordinate time zones.</p></div>
     <div class="card"><h3>Questions for the buyer?</h3>
       <% if (thread) { %><a class="btn btn-outline" href="/messages/<%= thread.id %>">Open conversation</a>
       <% } else if (invite || quote) { %>

@@ -3,7 +3,7 @@
   <h1>Create your free business account</h1><p class="muted">One account for your company — buy, sell, or both.</p>
   <% if (errors.length) { %><div class="alert alert-error"><% errors.forEach(e => { %><div><%= e %></div><% }) %></div><% } %>
   <form method="post" action="/register">
-    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="tz" value="">
     <label>I want to</label>
     <div class="role-pick">
       <label><input type="radio" name="as" value="buyer" <%= v.as==='buyer'?'checked':'' %>><span>Buy / Source</span><small>Post requirements & RFQs</small></label>

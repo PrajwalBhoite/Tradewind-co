@@ -76,6 +76,8 @@ app.use('/', require('./routes/account'));
 app.use('/supplier', require('./routes/supplier'));
 app.use('/', require('./routes/buyer'));
 app.use('/', require('./routes/messages'));
+app.use('/', require('./routes/confidential'));
+app.use('/', require('./routes/meetings'));
 app.use('/admin', require('./routes/admin'));
 
 app.use((req, res) => res.status(404).render('error', { title: 'Page not found', message: 'The page you are looking for does not exist.' }));

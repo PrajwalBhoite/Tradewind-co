@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><%= title %></title>
+<link rel="stylesheet" href="/static/css/style.css">
+<style>body{background:#e9edf3}.doc{max-width:820px;margin:30px auto;background:#fff;padding:56px 64px;border-radius:6px;box-shadow:var(--shadow);font-size:14.5px;line-height:1.7}
+.doc h1{text-align:center;font-size:22px}.doc h3{margin-top:22px;font-size:15px}.sig{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:36px}
+.sig div{border-top:1px solid #333;padding-top:8px;font-size:13px}.stamp{color:var(--green);font-weight:700}@media print{body{background:#fff}.doc{box-shadow:none;margin:0}.noprint{display:none}}</style></head>
+<body><div class="doc">
+<p class="noprint" style="text-align:right"><button class="btn btn-outline btn-sm" data-print>🖨 Print / save as PDF</button></p>
+<img src="/static/img/logo.png" alt="TradeWind Co." style="height:34px">
+<h1>MUTUAL NON-DISCLOSURE AGREEMENT</h1>
+<p style="text-align:center" class="muted"><%= r ? 'Confidential sourcing reference ' + r.ref : 'TradeWind Co. standard template' %></p>
+<p>This Mutual Non-Disclosure Agreement ("Agreement") is entered into through the TradeWind Co. platform, operated by Crescendo Worldwide, between:</p>
+<p><b>(1) <%= r ? r.buyer : '[Buyer company]' %></b><%= r && r.buyer_country ? ', ' + r.buyer_country : '' %> (the "Buyer"); and<br>
+<b>(2) <%= supplier ? supplier.name : '[Supplier company]' %></b><%= supplier ? ', ' + supplier.country : '' %> (the "Supplier"),</p>
+<p>each a "Party", in connection with the evaluation, quotation and possible supply of <b><%= r ? r.title : '[product]' %></b> (the "Purpose").</p>
+<h3>1. Confidential Information</h3><p>"Confidential Information" means all drawings, specifications, models, quantities, prices, commercial terms, supplier and customer identities and any other information disclosed by a Party, in any form, that is marked confidential or would reasonably be understood to be confidential, including all material made available in the TradeWind secure drawing vault.</p>
+<h3>2. Obligations</h3><p>The receiving Party shall (a) use Confidential Information solely for the Purpose; (b) not disclose it to any third party except its employees and sub-contractors who need to know it for the Purpose and are bound by obligations no less protective; (c) protect it with at least reasonable care; (d) not reverse-engineer, copy or reproduce drawings except as needed for the Purpose; and (e) not approach the other Party's customers or suppliers identified through the Purpose to circumvent the other Party or the platform.</p>
+<h3>3. Exclusions</h3><p>Obligations do not apply to information that is or becomes public without breach, was lawfully known before disclosure, is independently developed, or must be disclosed by law (with prompt notice to the disclosing Party where permitted).</p>
+<h3>4. Return and destruction</h3><p>On request, or if no order is placed, the receiving Party shall promptly return or destroy all Confidential Information and copies, and confirm this in writing.</p>
+<h3>5. No licence; ownership</h3><p>All Confidential Information and intellectual property remain the property of the disclosing Party. No licence is granted except the limited right to use it for the Purpose. No obligation to place or accept any order arises from this Agreement.</p>
+<h3>6. Term</h3><p>This Agreement applies to disclosures made within two (2) years from the date of the last signature, and the confidentiality obligations survive for five (5) years after disclosure (indefinitely for trade secrets).</p>
+<h3>7. Remedies</h3><p>Unauthorised disclosure may cause irreparable harm; the disclosing Party is entitled to seek injunctive relief in addition to any other remedy.</p>
+<h3>8. Electronic signature and governing law</h3><p>The Parties agree that typed names entered on the TradeWind platform, together with the recorded date, time and IP address, constitute valid electronic signatures. This Agreement is governed by the laws of India and subject to the jurisdiction of the courts at Pune, unless the Parties agree otherwise in writing.</p>
+<div class="sig">
+  <div><b>For the Buyer</b><br><% if (n && n.buyer_signed_at) { %><span class="stamp">✔ Signed electronically</span><br><%= n.buyer_signer_name %>, <%= n.buyer_signer_title %><br><%= n.buyer_signed_at %> UTC · IP <%= n.buyer_ip %><% } else { %>Name / designation / date<% } %></div>
+  <div><b>For the Supplier</b><br><% if (n && n.supplier_signed_at) { %><span class="stamp">✔ Signed electronically</span><br><%= n.supplier_signer_name %>, <%= n.supplier_signer_title %><br><%= n.supplier_signed_at %> UTC · IP <%= n.supplier_ip %><% } else { %>Name / designation / date<% } %></div>
+</div>
+<p class="muted mt2" style="font-size:12px">Template provided for convenience; it is not legal advice. Have it reviewed by your legal counsel and replace it with your own NDA where required.</p>
+</div><script src="/static/js/app.js"></script></body></html>

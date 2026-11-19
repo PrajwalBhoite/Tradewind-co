@@ -5,6 +5,7 @@
     <% if (quotes.length > 1) { %><a class="btn btn-navy" href="/my/requirements/<%= r.id %>/compare">⚖ Compare <%= quotes.length %> quotations</a><% } %>
     <% if (['open','pending_review'].includes(r.status)) { %><form method="post" action="/my/requirements/<%= r.id %>/close"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger" data-confirm="Close this requirement? Suppliers will no longer be able to quote.">Close</button></form><% } %>
   </div></div>
+<% if (r.sourcing_type === 'confidential') { %><div class="alert alert-info">🔒 Confidential (NDA-gated) RFQ. Shortlisting, NDAs, the drawing vault and release are managed in the <a href="/confidential/<%= r.id %>"><b>confidential workspace →</b></a></div><% } %>
 <% if (r.status === 'pending_review') { %><div class="alert alert-info">⏳ Your requirement is being screened by the TradeWind team. Once approved it is sent automatically to the best-matched suppliers. You can already add suppliers below.</div><% } %>
 <% if (r.status === 'rejected') { %><div class="alert alert-error">This requirement needs changes: <%= r.admin_note || 'please contact support.' %></div><% } %>
 <% if (pendingQuotes) { %><div class="alert alert-info"><%= pendingQuotes %> more quotation<%= pendingQuotes>1?'s are':' is' %> being verified and will appear shortly.</div><% } %>
@@ -26,6 +27,7 @@
           <form method="post" action="/quotes/<%= q.id %>/reject" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger btn-sm">✕</button></form>
         <% } %>
         <% if (q.attachment) { %><a class="btn btn-ghost btn-sm" href="/files/quote/<%= q.id %>">⬇ File</a><% } %>
+        <a class="btn btn-ghost btn-sm" href="/meetings?rfq=<%= r.id %>&with=<%= q.supplier_company_id %>">🤝 Meeting</a>
         <form method="post" action="/messages/start/new" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="to_company_id" value="<%= q.supplier_company_id %>"><input type="hidden" name="requirement_id" value="<%= r.id %>"><input type="hidden" name="subject" value="<%= r.ref %> – quotation discussion"><button class="btn btn-ghost btn-sm">✉ Message</button></form>
       </td></tr>
       <% if (q.notes) { %><tr><td></td><td colspan="8"><small><b>Supplier notes:</b> <%= q.notes %></small></td></tr><% } %>
@@ -46,7 +48,7 @@
     <% if (!invites.length) { %><p class="muted">Suppliers will be added when the RFQ is approved.</p><% } %>
     <% invites.forEach(i => { %><div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)">
       <div><a href="/companies/<%= i.supplier_company_id %>"><%= i.supplier %></a> <% if (i.verification_status==='verified') { %><span class="verified">✔</span><% } %><br><small><%= i.country %> · <%= i.source %></small></div>
-      <div class="row"><% if (i.match_score) { %><span class="score"><%= i.match_score %>%</span><% } %><%- include('../partials/badge', { s: i.status }) %></div></div><% }) %>
+      <div class="row"><% if (i.match_score) { %><span class="score"><%= i.match_score %>%</span><% } %><%- include('../partials/badge', { s: i.status }) %><a class="btn btn-ghost btn-sm" title="Request meeting" href="/meetings?rfq=<%= r.id %>&with=<%= i.supplier_company_id %>">🤝</a></div></div><% }) %>
   </div>
 </div>
 

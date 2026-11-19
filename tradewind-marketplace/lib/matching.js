@@ -56,15 +56,19 @@ function scoreSupplier(req, company, products, category) {
   return { score: Math.min(100, score), reasons };
 }
 
-function findMatches(requirementId, limit = 50) {
+function findMatches(requirementId, limit = 50, opts = {}) {
   const req = get('SELECT * FROM requirements WHERE id = ?', requirementId);
   if (!req) return [];
   const category = req.category_id ? get('SELECT * FROM categories WHERE id = ?', req.category_id) : null;
-  const suppliers = all("SELECT * FROM companies WHERE is_supplier = 1 AND status = 'active' AND id != ?", req.buyer_company_id);
+  const verifiedOnly = opts.verifiedOnly ?? req.sourcing_type === 'confidential';
+  const suppliers = all(`SELECT * FROM companies WHERE is_supplier = 1 AND status = 'active' AND id != ?
+                         ${verifiedOnly ? "AND verification_status = 'verified'" : ''}`, req.buyer_company_id);
+  const preferred = (req.preferred_countries || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
   const results = [];
   for (const c of suppliers) {
     const products = all("SELECT * FROM products WHERE company_id = ? AND status = 'active'", c.id);
     const { score, reasons } = scoreSupplier(req, c, products, category);
+    if (preferred.length && c.country && preferred.includes(c.country.toLowerCase())) { reasons.push('Preferred country'); }
     if (score >= MIN_SCORE) results.push({ company: c, score, reasons });
   }
   results.sort((a, b) => b.score - a.score || (b.company.verification_status === 'verified') - (a.company.verification_status === 'verified'));
@@ -72,8 +76,10 @@ function findMatches(requirementId, limit = 50) {
 }
 
 // Called when admin approves a requirement: send RFQ to the best-matched suppliers.
+// Confidential sourcing never sends anything to suppliers here — it only proposes profiles to the buyer.
 function distributeRFQ(requirementId) {
   const req = get('SELECT * FROM requirements WHERE id = ?', requirementId);
+  if (req.sourcing_type === 'confidential') return identifyConfidential(requirementId);
   const matches = findMatches(requirementId, MAX_AUTO_INVITES);
   let sent = 0;
   for (const m of matches) {
@@ -87,4 +93,29 @@ function distributeRFQ(requirementId) {
   return sent;
 }
 
-module.exports = { findMatches, distributeRFQ, scoreSupplier, MIN_SCORE };
+// Confidential sourcing step 2: TradeWind identifies verified supplier profiles for the buyer to review.
+// Suppliers are NOT notified and see nothing until they are shortlisted and receive the buyer's NDA.
+function identifyConfidential(requirementId) {
+  const req = get('SELECT * FROM requirements WHERE id = ?', requirementId);
+  const matches = findMatches(requirementId, 10, { verifiedOnly: true });
+  let n = 0;
+  for (const m of matches) {
+    const r = run(`INSERT OR IGNORE INTO rfq_invites(requirement_id, supplier_company_id, match_score, match_reasons, source, status)
+                   VALUES(?,?,?,?, 'auto', 'proposed')`, requirementId, m.company.id, m.score, m.reasons.join(' · '));
+    if (r.changes) n++;
+  }
+  notifyCompany(req.buyer_company_id, `${req.ref}: ${n} verified supplier profiles identified — review and shortlist`, `/confidential/${requirementId}`);
+  return n;
+}
+
+// Add one supplier to an RFQ (buyer/admin invite). Respects confidential rules.
+function addInvite(requirementId, supplierId, score, source) {
+  const req = get('SELECT * FROM requirements WHERE id = ?', requirementId);
+  const cs = req.sourcing_type === 'confidential';
+  const ins = run(`INSERT OR IGNORE INTO rfq_invites(requirement_id,supplier_company_id,match_score,source,status) VALUES(?,?,?,?,?)`,
+    requirementId, supplierId, score || 0, source, cs ? 'proposed' : 'sent');
+  if (ins.changes && !cs && req.status === 'open') notifyCompany(supplierId, `You were invited to quote on ${req.ref}: ${req.title}`, `/rfq/${requirementId}`);
+  return ins.changes;
+}
+
+module.exports = { findMatches, distributeRFQ, identifyConfidential, addInvite, scoreSupplier, MIN_SCORE };

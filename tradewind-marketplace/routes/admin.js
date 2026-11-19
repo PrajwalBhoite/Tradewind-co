@@ -2,7 +2,7 @@
 const router = require('express').Router();
 const { all, get, run, setting, setSetting, notifyCompany, log } = require('../lib/db');
 const H = require('../lib/helpers');
-const { distributeRFQ, findMatches } = require('../lib/matching');
+const { distributeRFQ, findMatches, addInvite } = require('../lib/matching');
 
 router.use(H.requireLogin, H.requireAdmin);
 
@@ -73,8 +73,11 @@ router.get('/requirements/:id', (req, res) => {
   const r = get(`SELECT r.*, c.name buyer, cat.name category FROM requirements r JOIN companies c ON c.id=r.buyer_company_id LEFT JOIN categories cat ON cat.id=r.category_id WHERE r.id=?`, req.params.id);
   if (!r) return res.redirect('/admin/requirements');
   const matches = findMatches(r.id, 30);
+  const ndas = all('SELECT n.*, c.name FROM nda_agreements n JOIN companies c ON c.id=n.supplier_company_id WHERE requirement_id=?', r.id);
+  const vaultLog = all(`SELECT l.*, c.name company, u.name user FROM vault_access_log l LEFT JOIN companies c ON c.id=l.company_id LEFT JOIN users u ON u.id=l.user_id
+                        WHERE l.requirement_id=? ORDER BY l.id DESC LIMIT 50`, r.id);
   const invites = all('SELECT i.*, c.name FROM rfq_invites i JOIN companies c ON c.id=i.supplier_company_id WHERE requirement_id=? ORDER BY match_score DESC', r.id);
-  res.render('admin/requirement', { title: r.ref, r, matches, invites });
+  res.render('admin/requirement', { title: r.ref, r, matches, invites, ndas, vaultLog });
 });
 
 router.post('/requirements/:id', (req, res) => {
@@ -84,19 +87,22 @@ router.post('/requirements/:id', (req, res) => {
   if (a === 'approve') {
     run("UPDATE requirements SET status='open', admin_note=? WHERE id=?", req.body.note || '', r.id);
     // notify any suppliers the buyer invited manually before approval
-    for (const i of all('SELECT supplier_company_id FROM rfq_invites WHERE requirement_id=?', r.id)) notifyCompany(i.supplier_company_id, `You were invited to quote on ${r.ref}: ${r.title}`, `/rfq/${r.id}`);
-    const n = distributeRFQ(r.id);
-    notifyCompany(r.buyer_company_id, `${r.ref} approved and sent to ${n} matched suppliers.`, `/my/requirements/${r.id}`);
-    H.flash(req, 'success', `Approved. RFQ distributed to ${n} matched suppliers.`);
+    if (r.sourcing_type === 'confidential') {
+      const n = distributeRFQ(r.id); // proposes verified profiles to the buyer only
+      H.flash(req, 'success', `Approved. ${n} verified supplier profiles proposed to the buyer. Suppliers see nothing until NDA.`);
+    } else {
+      for (const i of all('SELECT supplier_company_id FROM rfq_invites WHERE requirement_id=?', r.id)) notifyCompany(i.supplier_company_id, `You were invited to quote on ${r.ref}: ${r.title}`, `/rfq/${r.id}`);
+      const n = distributeRFQ(r.id);
+      notifyCompany(r.buyer_company_id, `${r.ref} approved and sent to ${n} matched suppliers.`, `/my/requirements/${r.id}`);
+      H.flash(req, 'success', `Approved. RFQ distributed to ${n} matched suppliers.`);
+    }
   } else if (a === 'reject') {
     run("UPDATE requirements SET status='rejected', admin_note=? WHERE id=?", req.body.note || '', r.id);
     notifyCompany(r.buyer_company_id, `${r.ref} needs changes: ${req.body.note || 'please contact support'}`, `/my/requirements/${r.id}`);
     H.flash(req, 'success', 'Requirement rejected.');
   } else if (a === 'invite') {
-    const sid = Number(req.body.supplier_company_id);
-    const ins = run("INSERT OR IGNORE INTO rfq_invites(requirement_id,supplier_company_id,match_score,source) VALUES(?,?,?,'admin')", r.id, sid, Number(req.body.score) || 0);
-    if (ins.changes && r.status === 'open') notifyCompany(sid, `New RFQ for you: ${r.ref} ${r.title}`, `/rfq/${r.id}`);
-    H.flash(req, 'success', 'Supplier invited.');
+    addInvite(r.id, Number(req.body.supplier_company_id), Number(req.body.score) || 0, 'admin');
+    H.flash(req, 'success', r.sourcing_type === 'confidential' ? 'Supplier profile proposed to the buyer.' : 'Supplier invited.');
   } else if (a === 'close') {
     run("UPDATE requirements SET status='closed' WHERE id=?", r.id);
   }
@@ -162,6 +168,13 @@ router.post('/categories', (req, res) => {
   if (req.body.action === 'delete') run('DELETE FROM categories WHERE id=?', req.body.id);
   else if (req.body.name && req.body.industry) run('INSERT OR IGNORE INTO categories(name,industry) VALUES(?,?)', req.body.name.trim(), req.body.industry.trim());
   res.redirect('/admin/categories');
+});
+
+// ---------- Meetings coordination ----------
+router.get('/meetings', (req, res) => {
+  const M = require('./meetings');
+  const meetings = M.loadMeetings('1=1');
+  res.render('admin/meetings', { title: 'Meetings', meetings, TZ: require('../lib/tz'), PLATFORMS: M.PLATFORMS, quickLinks: M.quickLinks });
 });
 
 // ---------- Settings ----------

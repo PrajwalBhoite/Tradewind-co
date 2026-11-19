@@ -1,0 +1,20 @@
+<%- include('../partials/app-start') %>
+<div class="page-h"><div><h1>🔒 Confidential sourcing</h1><p class="muted mb0">NDA-gated RFQs: share only basics first, shortlist verified suppliers, and release drawings only after an NDA is signed by both parties.</p></div>
+  <a class="btn btn-primary" href="/confidential/new">+ New confidential RFQ</a></div>
+<% if (!rows.length) { %>
+<div class="card">
+  <div class="grid g3">
+    <div class="feature"><div class="ic">1</div><h3>Share basics only</h3><p>Product, material, weight, process, annual & batch quantity, Incoterms. No drawings, no company name.</p></div>
+    <div class="feature"><div class="ic">2</div><h3>Review & shortlist</h3><p>TradeWind proposes verified supplier profiles. You pick a shortlist. Suppliers are not told anything yet.</p></div>
+    <div class="feature"><div class="ic">3</div><h3>NDA, then release</h3><p>Shortlisted suppliers e-sign your NDA, you countersign, then the full RFQ and drawings go to the secure vault.</p></div>
+  </div>
+  <p class="mt" style="text-align:center"><a class="btn btn-primary btn-lg" href="/confidential/new">Start a confidential RFQ</a></p>
+</div>
+<% } else { %>
+<div class="table-wrap"><table>
+  <tr><th>Ref</th><th>Requirement</th><th>Status</th><th>Profiles</th><th>Shortlisted</th><th>NDA signed</th><th>Released</th><th>Quotes</th><th></th></tr>
+  <% rows.forEach(r => { %><tr><td><%= r.ref %></td><td><b><%= r.title %></b><br><small><%= h.num(r.annual_qty) %> <%= r.unit %>/yr · <%= r.incoterm %> <%= r.delivery_location %></small></td>
+    <td><%- include('../partials/badge', { s: r.status }) %></td><td><%= r.profiles %></td><td><%= r.shortlisted %></td><td><%= r.signed %></td><td><%= r.released %></td><td><b><%= r.quotes %></b></td>
+    <td><a class="btn btn-outline btn-sm" href="/confidential/<%= r.id %>">Open workspace</a></td></tr><% }) %>
+</table></div><% } %>
+<%- include('../partials/app-end') %>

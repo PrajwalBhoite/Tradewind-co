@@ -45,10 +45,12 @@ Then open **http://localhost:3000** in your browser.
 | Admin (Crescendo team) | admin@tradewind.local | Admin@12345 |
 | Demo buyer | buyer@demo.com | Demo@1234 |
 | Demo supplier | supplier@demo.com | Demo@1234 |
+| Confidential-sourcing buyer | buyer2@demo.com | Demo@1234 |
+| Supplier with an NDA to sign | supplier2@demo.com | Demo@1234 |
 
 You can also register brand-new companies from the **Register** page.
 
-To wipe everything and start fresh, run `npm run reset`. Run `npm run seed` afterwards if you want the demo data back.
+To wipe everything and start with an empty database, run `npm run reset`. Run `npm run seed` afterwards if you want the demo data back.
 
 ---
 
@@ -112,9 +114,19 @@ docker build -t tradewind . && docker run -d -p 3000:3000 -v tradewind-data:/dat
 | **Notifications** | In-app alerts for matches, quotes, awards, verification and messages. |
 | **Dashboards** | Buyer: requirements, quotes and saved suppliers. Supplier: products, stock, matched RFQs, quotes, wins and views. |
 | **Admin panel** | KPIs, work queue, company KYB, requirement screening with live match results, quote verification, product moderation, users, categories (13 industries pre-loaded), plans and featured flags, platform settings. |
+| **🔒 Confidential sourcing (NDA-gated)** | A separate portal at `/confidential`. **1** The buyer shares only the basics, with no drawings: product, material and grade, weight, process, annual and batch quantity, target price, Incoterms, port and preferred countries. **2** TradeWind screens the request and proposes *verified* supplier profiles. Suppliers are told nothing. **3** The buyer shortlists. **4** The buyer's NDA is shared with the shortlist. The buyer can upload its own NDA or use the built-in mutual NDA. The supplier e-signs, with name, title, time and IP recorded, and can also upload a signed copy. The buyer countersigns, and the NDA is then "signed by both". **5** The buyer releases the full RFQ and the **secure drawing vault** to NDA-signed suppliers only. Vault files are view-only, watermarked per supplier, downloads are off by default, and every view is logged. Released suppliers then quote through the normal review, comparison and award flow. |
+| **🤝 Virtual meetings** | Available once an RFQ is shared (for confidential RFQs, once the NDA is signed by both). The buyer or supplier picks the RFQ and counterpart, purpose, date and time, time zone, duration, alternative slot, and online or in-person. The flow is Requested → Accepted → Confirmed with a join link → Completed with minutes. Either side can propose a new time. One-click **Create on Zoom / Microsoft Teams / Google Meet** buttons open the platform (Teams and Google Calendar come pre-filled). Paste the link back to confirm. Includes **Join meeting** buttons, an **Add to calendar** (.ics) download, and times shown in each user's own time zone. Admins can coordinate every meeting at `/admin/meetings`. |
 | **Monetisation hooks** | `plan` (free, premium or enterprise) and `featured` on companies and products drive ranking. Pricing page included. |
 
-## 4. Project structure
+## 4. Updating a live site to a new version
+
+1. On GitHub, open the `tradewind-marketplace` folder and click **Add file → Upload files**.
+2. Drag in everything from the new unzipped `tradewind-marketplace` folder, then click **Commit changes**. Files with the same name are replaced.
+3. Railway redeploys automatically in 1–3 minutes.
+
+The database upgrades itself on start, so existing users, products and RFQs are kept.
+
+## 5. Project structure
 
 ```
 server.js            → app setup, security headers, sessions, routes
@@ -122,18 +134,20 @@ seed.js              → categories + admin (auto) and demo data (npm run seed)
 lib/db.js            → database schema (SQLite built into Node) + helpers
 lib/matching.js      → buyer–supplier matching & RFQ distribution
 lib/helpers.js       → auth guards, CSRF, uploads, formatting, trust score
-routes/              → public, auth, account, supplier, buyer (RFQ/quotes), messages, admin
+routes/              → public, auth, account, supplier, buyer (RFQ/quotes), confidential (NDA portal + vault), meetings, messages, admin
+lib/tz.js            → time-zone conversion for meetings
+seed-assets/         → sample drawing used by the demo data
 views/               → EJS page templates (responsive)
 public/              → CSS, JS, logo
 data/ , uploads/     → created automatically: database + uploaded files (back these up!)
 ```
 
-## 5. Next phases (roadmap)
+## 6. Next phases (roadmap)
 
 1. **Email notifications.** Add SMTP (Amazon SES, SendGrid or Zoho) using nodemailer in `notifyCompany()`.
 2. **Payments for memberships.** Use Razorpay or Stripe subscriptions to set `companies.plan` automatically.
 3. **PostgreSQL** for scale. The schema in `lib/db.js` maps across almost one-to-one. Add S3 for uploads.
-4. **NDA flow** for confidential sourcing, a negotiation room, PO, invoice and payment tracking, supplier audits.
+4. A negotiation room, PO, invoice and payment tracking, supplier audits. Optionally, DocuSign or Adobe Sign for legally stronger NDA e-signatures, and direct Zoom/Teams API integration to create meeting links automatically.
 5. **AI agents.** RFQ analysis, quote comparison summaries and translation through the Claude API.
 6. **Password reset email**, two-factor authentication, multi-user company teams, multiple languages.
 

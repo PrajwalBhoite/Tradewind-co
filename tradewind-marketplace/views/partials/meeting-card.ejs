@@ -1,0 +1,45 @@
+<% const ql = quickLinks(m); const pending = ['requested','rescheduled'].includes(m.status); %>
+<div class="meet" id="m<%= m.id %>">
+  <div class="row between">
+    <div><b><%= m.ref %></b> · <%= m.purpose %> <span class="badge b-m-<%= m.status %>"><%= { requested: 'Requested', coordinated: 'Accepted · link pending', confirmed: 'Confirmed', rescheduled: 'New time proposed', completed: 'Completed', cancelled: 'Cancelled' }[m.status] %></span><br>
+      <small class="muted"><% if (m.rfq_ref) { %>RFQ <%= m.rfq_ref %> · <% } %>with <b><%= typeof other !== 'undefined' ? other : m.requester + ' ↔ ' + m.with_name %></b> · requested by <%= m.requested_by || m.requester %></small></div>
+    <div style="text-align:right"><b>🗓 <%= TZ.fmt(m.start_utc, viewTz) %></b><br><small class="muted">Proposed as <%= m.local_date %> <%= m.local_time %> (<%= m.timezone %>) · <%= m.duration_min %> min</small></div>
+  </div>
+  <% if (m.description) { %><p style="margin:8px 0 0;font-size:14px"><%= m.description %></p><% } %>
+  <small class="muted"><%= m.mode === 'in_person' ? '📍 In person: ' + (m.location || 'location to be agreed') : '💻 Online via ' + PLATFORMS[m.platform] %><%= m.alt_slot ? ' · Alternative slot: ' + m.alt_slot : '' %></small>
+  <% if (m.minutes) { %><div class="alert alert-info" style="margin:10px 0 0"><b>Minutes & next steps:</b> <%= m.minutes %></div><% } %>
+
+  <div class="meet-actions">
+    <% if (m.link && ['confirmed','coordinated','rescheduled','requested'].includes(m.status)) { %><a class="btn btn-green btn-sm" href="<%= m.link %>" target="_blank" rel="noopener">🎥 Join meeting</a><% } %>
+    <% if (!['cancelled'].includes(m.status)) { %><a class="btn btn-ghost btn-sm" href="/meetings/<%= m.id %>/calendar.ics">📅 Add to calendar</a><% } %>
+
+    <% if (pending && (myTurn || isAdmin)) { %>
+      <details class="inline-form"><summary class="btn btn-primary btn-sm">✔ Accept</summary>
+        <form method="post" action="/meetings/<%= m.id %>/accept"><input type="hidden" name="_csrf" value="<%= csrf %>">
+          <p class="hint">Create the meeting on your platform, then paste its link here (optional — you can add it later).</p>
+          <%- include('meeting-platforms', { ql }) %>
+          <input type="url" name="link" placeholder="https://zoom.us/j/… or https://teams.microsoft.com/…">
+          <button class="btn btn-primary btn-sm mt">Accept<%= ' ' %>meeting</button></form></details>
+    <% } else if (pending) { %><small class="muted">⏳ Waiting for the other party to respond</small><% } %>
+
+    <% if (['coordinated','confirmed'].includes(m.status)) { %>
+      <details class="inline-form"><summary class="btn btn-outline btn-sm"><%= m.link ? '✎ Change link' : '🔗 Add meeting link' %></summary>
+        <form method="post" action="/meetings/<%= m.id %>/link"><input type="hidden" name="_csrf" value="<%= csrf %>">
+          <%- include('meeting-platforms', { ql }) %>
+          <input type="url" name="link" required placeholder="Paste the Zoom / Teams / Google Meet link" value="<%= m.link || '' %>">
+          <button class="btn btn-primary btn-sm mt">Save & confirm</button></form></details>
+      <details class="inline-form"><summary class="btn btn-ghost btn-sm">✓ Mark completed</summary>
+        <form method="post" action="/meetings/<%= m.id %>/complete"><input type="hidden" name="_csrf" value="<%= csrf %>">
+          <textarea name="minutes" rows="3" placeholder="Minutes, decisions and next steps"></textarea><button class="btn btn-primary btn-sm mt">Save minutes</button></form></details>
+    <% } %>
+
+    <% if (!['completed','cancelled'].includes(m.status)) { %>
+      <details class="inline-form"><summary class="btn btn-ghost btn-sm">↺ Propose new time</summary>
+        <form method="post" action="/meetings/<%= m.id %>/reschedule" class="grid g3" style="align-items:end"><input type="hidden" name="_csrf" value="<%= csrf %>">
+          <div><label>Date</label><input type="date" name="date" required></div><div><label>Time</label><input type="time" name="time" required></div>
+          <div><label>Time zone</label><select name="timezone"><% zones.forEach(z => { %><option value="<%= z[0] %>" <%= z[0]===viewTz?'selected':'' %>><%= z[1] %></option><% }) %></select></div>
+          <button class="btn btn-outline btn-sm">Send new time</button></form></details>
+      <form method="post" action="/meetings/<%= m.id %>/cancel" class="inline"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-ghost btn-sm" data-confirm="Cancel this meeting?">✕ Cancel</button></form>
+    <% } %>
+  </div>
+</div>

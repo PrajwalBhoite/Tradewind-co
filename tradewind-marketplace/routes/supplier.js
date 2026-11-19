@@ -62,7 +62,8 @@ router.get('/rfqs', (req, res) => {
                     cat.name category, q.status quote_status, q.id quote_id
                     FROM rfq_invites i JOIN requirements r ON r.id=i.requirement_id LEFT JOIN categories cat ON cat.id=r.category_id
                     LEFT JOIN quotations q ON q.requirement_id=r.id AND q.supplier_company_id=i.supplier_company_id
-                    WHERE i.supplier_company_id=? ORDER BY (r.status='open') DESC, i.created_at DESC`, req.company.id);
+                    WHERE i.supplier_company_id=? AND i.status != 'proposed' AND (r.sourcing_type != 'confidential' OR i.released = 1)
+                    ORDER BY (r.status='open') DESC, i.created_at DESC`, req.company.id);
   res.render('supplier/rfqs', { title: 'RFQ inbox', rows });
 });
 

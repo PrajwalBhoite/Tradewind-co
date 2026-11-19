@@ -1,0 +1,39 @@
+<%- include('../partials/app-start') %>
+<small class="muted"><a href="/supplier/ndas">NDA requests</a> / <%= r.ref %></small>
+<div class="page-h"><div><h1>Confidential RFQ · NDA</h1><p class="muted mb0">You have been shortlisted by <b><%= r.buyer %></b> (<%= r.buyer_country %>)<% if (r.buyer_verified==='verified') { %> <span class="verified">✔ Verified buyer</span><% } %>. Drawings and the full RFQ are shared only after the NDA is signed by both parties.</p></div>
+  <span class="badge b-nda-<%= n.status %>" style="font-size:13px"><%= invite && invite.released ? 'RFQ released' : { sent: 'Awaiting your signature', supplier_signed: 'Awaiting buyer countersign', signed_both: 'Signed by both', declined: 'Declined' }[n.status] %></span></div>
+<% if (invite && invite.released) { %><div class="alert alert-success">✅ The full RFQ has been released to you. <a href="/rfq/<%= r.id %>"><b>Open the RFQ and quote →</b></a></div><% } %>
+<div class="grid" style="grid-template-columns:1.2fr 1fr;align-items:start">
+  <div class="card"><h2>Requirement basics</h2>
+    <dl class="kv">
+      <dt>Product</dt><dd><%= r.title %></dd><dt>Category</dt><dd><%= r.category %> (<%= r.industry %>)</dd>
+      <dt>Description</dt><dd><%= r.description %></dd><dt>Material & grade</dt><dd><%= r.material %> <%= r.grade %></dd>
+      <dt>Weight per piece</dt><dd><%= r.weight_per_piece ? r.weight_per_piece + ' kg' : '—' %></dd><dt>Process</dt><dd><%= r.process || '—' %></dd>
+      <dt>Size envelope</dt><dd><%= r.size_envelope || '—' %></dd><dt>Certifications</dt><dd><%= r.certs_required || '—' %></dd>
+      <dt>Annual quantity</dt><dd><b><%= h.num(r.annual_qty) %> <%= r.unit %></b></dd><dt>Batch quantity</dt><dd><%= h.num(r.batch_qty) %> <%= r.unit %></dd>
+      <dt>Target price</dt><dd><%= r.share_target_price && r.target_price ? h.money(r.target_price, r.currency) + ' / ' + r.unit : (r.share_target_price ? '—' : 'Not disclosed') %></dd>
+      <dt>Incoterms</dt><dd><%= r.incoterm %> <%= r.delivery_location %>, <%= r.delivery_country %></dd>
+      <dt>Quote deadline</dt><dd><%= h.date(r.quote_deadline) %></dd>
+    </dl>
+    <div class="alert alert-info mt">🔒 Drawings: withheld in the secure vault until the NDA is signed by both parties.</div>
+  </div>
+  <div class="card"><h2>Non-disclosure agreement</h2>
+    <p><% if (r.nda_mode === 'own' && r.nda_file) { %>The buyer uses its own NDA: <a href="/nda/<%= r.id %>/file"><b>⬇ <%= r.nda_file_name %></b></a><br><small class="muted">Download, review and (optionally) upload a signed copy below.</small>
+       <% } else { %>This RFQ uses the <a href="/nda/<%= r.id %>/document" target="_blank"><b>TradeWind standard mutual NDA</b></a> between <%= r.buyer %> and <%= company.name %>.<% } %></p>
+    <% if (n.status === 'sent') { %>
+    <form method="post" action="/nda/<%= r.id %>/sign" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrf %>">
+      <div class="grid g2"><div class="field"><label>Full name *</label><input type="text" name="signer_name" value="<%= user.name %>" required></div>
+        <div class="field"><label>Designation *</label><input type="text" name="signer_title" value="<%= user.designation || '' %>" required></div></div>
+      <div class="field"><label>Signed copy (optional)</label><input type="file" name="signed_file" accept=".pdf,.jpg,.png"></div>
+      <label class="check"><input type="checkbox" name="agree" value="1" required> <span>I have read the NDA, I am authorised to sign on behalf of <b><%= company.name %></b>, and I agree that typing my name is my electronic signature. Date, time and IP address are recorded.</span></label>
+      <button class="btn btn-primary btn-block btn-lg mt">✍ Sign NDA</button>
+    </form>
+    <form method="post" action="/nda/<%= r.id %>/decline" class="row mt"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="text" name="reason" placeholder="Reason (optional)" style="flex:1"><button class="btn btn-ghost btn-sm" data-confirm="Decline this NDA? You will not receive the RFQ.">Decline</button></form>
+    <% } else { %>
+      <dl class="kv"><dt>Signed by you</dt><dd><%= n.supplier_signer_name || '—' %> <%= n.supplier_signed_at ? '· ' + h.date(n.supplier_signed_at) : '' %></dd>
+      <dt>Buyer countersigned</dt><dd><%= n.buyer_signer_name ? n.buyer_signer_name + ' · ' + h.date(n.buyer_signed_at) : 'Pending' %></dd></dl>
+    <% } %>
+  </div>
+</div>
+<%- include('../partials/app-end') %>

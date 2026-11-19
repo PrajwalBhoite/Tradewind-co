@@ -77,7 +77,11 @@ router.post('/messages/start/new', (req, res) => {
   const prodId = req.body.product_id ? Number(req.body.product_id) : null;
   if (reqId) { // must be a party to that RFQ
     const r = get('SELECT * FROM requirements WHERE id=?', reqId);
-    const party = r && (r.buyer_company_id === me || get('SELECT 1 x FROM rfq_invites WHERE requirement_id=? AND supplier_company_id=?', reqId, me));
+    const other = r && r.buyer_company_id === me ? to : me;
+    const inv = r && get('SELECT * FROM rfq_invites WHERE requirement_id=? AND supplier_company_id=?', reqId, other);
+    const nda = r && get("SELECT 1 x FROM nda_agreements WHERE requirement_id=? AND supplier_company_id=? AND status='signed_both'", reqId, other);
+    const shared = inv && (r.sourcing_type === 'confidential' ? (inv.released || nda) : inv.status !== 'proposed');
+    const party = r && (r.buyer_company_id === me || r.buyer_company_id === to) && shared;
     if (!party) return res.redirect('back');
   }
   let t = get(`SELECT * FROM threads WHERE ((company_a=? AND company_b=?) OR (company_a=? AND company_b=?)) AND COALESCE(requirement_id,0)=? AND COALESCE(product_id,0)=?`,

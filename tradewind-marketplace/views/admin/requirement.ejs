@@ -19,7 +19,14 @@
     <% invites.forEach(i => { %><div class="row between" style="padding:5px 0;border-bottom:1px solid var(--line)"><span><%= i.name %> <small>(<%= i.source %>)</small></span><span class="row"><span class="score"><%= i.match_score %>%</span><%- include('../partials/badge', { s: i.status }) %></span></div><% }) %>
   </div>
 </div>
-<div class="card mt"><h3>Matching engine results</h3><p class="muted">Approving sends the RFQ automatically to the top matches. You can also invite manually.</p>
+<% if (r.sourcing_type === 'confidential') { %>
+<div class="grid g2 mt">
+  <div class="card"><h3>🔏 NDA status</h3><% if (!ndas.length) { %><p class="muted">No NDAs shared yet.</p><% } %>
+    <% ndas.forEach(n => { %><div class="row between" style="padding:6px 0;border-bottom:1px solid var(--line)"><span><%= n.name %><br><small class="muted"><%= n.supplier_signer_name || '' %> <%= n.supplier_signed_at || '' %></small></span><span class="badge b-nda-<%= n.status %>"><%= n.status.replace('_',' ') %></span></div><% }) %></div>
+  <div class="card" style="margin-top:0"><h3>Vault access log</h3><% if (!vaultLog.length) { %><p class="muted">No access yet.</p><% } %>
+    <% vaultLog.forEach(l => { %><div style="font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--line)"><b><%= l.company %></b> · <%= l.action %> · <%= l.user %> · <%= h.ago(l.created_at) %> · <%= l.ip %></div><% }) %></div>
+</div><% } %>
+<div class="card mt"><h3>Matching engine results</h3><% if (r.sourcing_type === 'confidential') { %><p class="hint">Confidential sourcing: only verified suppliers are proposed, and only to the buyer. Suppliers learn nothing until the buyer shares its NDA.</p><% } %><p class="muted">Approving sends the RFQ automatically to the top matches. You can also invite manually.</p>
   <div class="table-wrap"><table><tr><th>Supplier</th><th>Score</th><th>Reasons</th><th></th></tr>
   <% matches.forEach(m => { %><tr><td><%= m.company.name %><br><small><%= m.company.country %> · <%= h.label(m.company.verification_status) %></small></td><td><span class="score"><%= m.score %>%</span></td><td><small><%= m.reasons.join(' · ') %></small></td>
   <td><form method="post"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="action" value="invite"><input type="hidden" name="supplier_company_id" value="<%= m.company.id %>"><input type="hidden" name="score" value="<%= m.score %>"><button class="btn btn-outline btn-sm">Invite</button></form></td></tr><% }) %>

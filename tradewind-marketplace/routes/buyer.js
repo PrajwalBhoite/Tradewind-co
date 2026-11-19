@@ -2,7 +2,7 @@
 const router = require('express').Router();
 const { all, get, run, setting, notifyCompany, notifyAdmins, log } = require('../lib/db');
 const H = require('../lib/helpers');
-const { findMatches, distributeRFQ } = require('../lib/matching');
+const { findMatches, distributeRFQ, addInvite } = require('../lib/matching');
 const { categoriesByIndustry } = require('./public');
 
 const L = [H.requireLogin, H.requireBuyer];
@@ -21,7 +21,7 @@ router.post('/requirements/new', ...L, H.uploadPrivate.single('attachment'), H.v
       delivery_location,delivery_country,required_by,quote_deadline,confidential,attachment,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     req.company.id, req.user.id, v.title.trim(), Number(v.category_id), v.material, v.grade, v.specifications, Number(v.quantity), v.unit,
     v.target_price === '' ? null : Number(v.target_price), v.currency, v.incoterm, v.delivery_location, v.delivery_country, v.required_by || null,
-    v.quote_deadline || null, v.confidential ? 1 : 0, req.file ? req.file.filename : null, review ? 'pending_review' : 'open').lastInsertRowid;
+    v.quote_deadline || null, 0, req.file ? req.file.filename : null, review ? 'pending_review' : 'open').lastInsertRowid;
   const ref = 'RFQ-' + (1000 + Number(id));
   run('UPDATE requirements SET ref=? WHERE id=?', ref, id);
   log(req.user.id, 'requirement_posted', ref);
@@ -55,9 +55,9 @@ router.get('/my/requirements/:id', ...L, (req, res) => {
                       WHERE q.requirement_id=? AND q.status NOT IN ('pending_review','withdrawn') ORDER BY q.unit_price ASC`, r.id);
   const pendingQuotes = get("SELECT COUNT(*) n FROM quotations WHERE requirement_id=? AND status='pending_review'", r.id).n;
   const invites = all(`SELECT i.*, s.name supplier, s.country, s.verification_status FROM rfq_invites i JOIN companies s ON s.id=i.supplier_company_id
-                       WHERE i.requirement_id=? ORDER BY i.match_score DESC`, r.id);
+                       WHERE i.requirement_id=? ${r.sourcing_type === 'confidential' ? 'AND i.released=1' : ''} ORDER BY i.match_score DESC`, r.id);
   const invited = new Set(invites.map(i => i.supplier_company_id));
-  const suggestions = r.status === 'open' || r.status === 'pending_review' ? findMatches(r.id, 12).filter(m => !invited.has(m.company.id)) : [];
+  const suggestions = r.sourcing_type !== 'confidential' && (r.status === 'open' || r.status === 'pending_review') ? findMatches(r.id, 12).filter(m => !invited.has(m.company.id)) : [];
   res.render('buyer/requirement', { title: r.ref, r, quotes, pendingQuotes, invites, suggestions });
 });
 
@@ -81,9 +81,11 @@ router.post('/my/requirements/:id/invite', ...L, (req, res) => {
   const sid = Number(req.body.supplier_company_id);
   const s = get("SELECT * FROM companies WHERE id=? AND is_supplier=1 AND status='active'", sid);
   if (s && s.id !== req.company.id) {
-    const ins = run("INSERT OR IGNORE INTO rfq_invites(requirement_id,supplier_company_id,match_score,source) VALUES(?,?,?, 'buyer')", r.id, s.id, Number(req.body.score) || 0);
-    if (ins.changes && r.status === 'open') notifyCompany(s.id, `You were invited to quote on ${r.ref}: ${r.title}`, `/rfq/${r.id}`);
-    H.flash(req, 'success', `${s.name} added to this RFQ${r.status !== 'open' ? ' (they will be notified once the RFQ is approved)' : ''}.`);
+    addInvite(r.id, s.id, Number(req.body.score) || 0, 'buyer');
+    H.flash(req, 'success', r.sourcing_type === 'confidential'
+      ? `${s.name} added to your supplier profiles. Shortlist them and share your NDA from the confidential workspace.`
+      : `${s.name} added to this RFQ${r.status !== 'open' ? ' (they will be notified once the RFQ is approved)' : ''}.`);
+    if (r.sourcing_type === 'confidential' && req.body.back !== 'company') return res.redirect('/confidential/' + r.id);
   }
   res.redirect(req.body.back === 'company' ? `/companies/${sid}` : `/my/requirements/${r.id}`);
 });
@@ -141,21 +143,25 @@ function rfqAccess(req) {
                  FROM requirements r LEFT JOIN categories cat ON cat.id=r.category_id JOIN companies b ON b.id=r.buyer_company_id WHERE r.id=?`, req.params.id);
   if (!r || r.buyer_company_id === req.company.id) return { r };
   const invite = get('SELECT * FROM rfq_invites WHERE requirement_id=? AND supplier_company_id=?', r.id, req.company.id);
+  // Confidential sourcing: the full RFQ is visible only after the NDA is signed by both parties and TradeWind releases it.
+  if (r.sourcing_type === 'confidential') return { r, invite, can: !!(invite && invite.released) };
   // Open, non-confidential RFQs are visible on the public board; confidential ones only to invited suppliers.
-  const can = !!invite || (r.status === 'open' && !r.confidential);
+  const can = !!(invite && invite.status !== 'proposed') || (r.status === 'open' && !r.confidential);
   return { r, invite, can };
 }
 
 router.get('/rfq/:id', ...S, (req, res) => {
   const { r, invite, can } = rfqAccess(req);
   if (r && r.buyer_company_id === req.company.id) return res.redirect('/my/requirements/' + r.id);
+  if (r && r.sourcing_type === 'confidential' && !can && invite && get('SELECT 1 x FROM nda_agreements WHERE requirement_id=? AND supplier_company_id=?', r.id, req.company.id)) return res.redirect('/nda/' + r.id);
   if (!r || !can || r.status === 'pending_review' || r.status === 'rejected') return res.status(404).render('error', { title: 'Not available', message: 'This RFQ is not available to your company.' });
   if (invite && invite.status === 'sent') run("UPDATE rfq_invites SET status='viewed' WHERE id=?", invite.id);
   const quote = get('SELECT * FROM quotations WHERE requirement_id=? AND supplier_company_id=?', r.id, req.company.id);
   // Confidentiality masking: hide buyer identity & drawings until shortlisted/awarded
-  const revealed = !r.confidential || (quote && ['shortlisted', 'awarded'].includes(quote.status));
+  const revealed = r.sourcing_type === 'confidential' || !r.confidential || (quote && ['shortlisted', 'awarded'].includes(quote.status));
+  const vault = r.sourcing_type === 'confidential' ? all('SELECT * FROM vault_files WHERE requirement_id=? ORDER BY id', r.id) : [];
   const thread = get('SELECT id FROM threads WHERE requirement_id=? AND ((company_a=? AND company_b=?) OR (company_a=? AND company_b=?))', r.id, req.company.id, r.buyer_company_id, r.buyer_company_id, req.company.id);
-  res.render('supplier/rfq', { title: r.ref, r, invite, quote, revealed, thread, today: new Date().toISOString().slice(0, 10) });
+  res.render('supplier/rfq', { title: r.ref, r, invite, quote, revealed, thread, vault, today: new Date().toISOString().slice(0, 10) });
 });
 
 router.post('/rfq/:id/quote', ...S, H.uploadPrivate.single('attachment'), H.verifyCsrf, (req, res) => {

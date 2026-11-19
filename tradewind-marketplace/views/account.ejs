@@ -7,6 +7,8 @@
     <div class="field"><label>Email</label><input type="email" value="<%= user.email %>" disabled></div>
     <div class="field"><label>Phone</label><input type="tel" name="phone" value="<%= user.phone || '' %>"></div>
     <div class="field"><label>Designation</label><input type="text" name="designation" value="<%= user.designation || '' %>"></div>
+    <div class="field"><label>My time zone (for meetings)</label><select name="timezone"><% zones.forEach(z => { %><option value="<%= z[0] %>" <%= user.timezone===z[0]?'selected':'' %>><%= z[1] %></option><% }) %>
+      <% if (!zones.some(z => z[0]===user.timezone)) { %><option selected><%= user.timezone %></option><% } %></select></div>
   </div>
   <h3 class="mt">Change password</h3>
   <div class="grid g2">

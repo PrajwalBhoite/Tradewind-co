@@ -20,7 +20,7 @@ router.get('/', (req, res) => {
       WHERE p.status='active' AND c.status='active' ORDER BY p.featured DESC, c.featured DESC, p.created_at DESC LIMIT 8`);
   const latestRfqs = all(`SELECT r.*, cat.name category, c.country buyer_country FROM requirements r
       LEFT JOIN categories cat ON cat.id=r.category_id JOIN companies c ON c.id=r.buyer_company_id
-      WHERE r.status='open' ORDER BY r.created_at DESC LIMIT 6`);
+      WHERE r.status='open' AND r.sourcing_type != 'confidential' ORDER BY r.created_at DESC LIMIT 6`);
   res.render('home', { title: 'Where Global Demand Meets Trusted Supply', stats, featured, latestRfqs, industries: Object.keys(INDUSTRIES) });
 });
 
@@ -83,7 +83,7 @@ router.get('/requirements', (req, res) => {
   const rows = all(`SELECT r.*, cat.name category, cat.industry, c.country buyer_country,
       (SELECT COUNT(*) FROM quotations q WHERE q.requirement_id=r.id) quote_count
       FROM requirements r LEFT JOIN categories cat ON cat.id=r.category_id JOIN companies c ON c.id=r.buyer_company_id
-      WHERE r.status='open' ${extra} ORDER BY r.created_at DESC LIMIT 100`, ...params);
+      WHERE r.status='open' AND r.sourcing_type != 'confidential' ${extra} ORDER BY r.created_at DESC LIMIT 100`, ...params);
   res.render('requirements-board', { title: 'Live Buyer Requirements', rows, industry, industries: Object.keys(INDUSTRIES) });
 });
 

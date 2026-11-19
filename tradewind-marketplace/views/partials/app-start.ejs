@@ -7,6 +7,7 @@
       <a href="/admin/companies">🏢 Companies & KYB</a>
       <a href="/admin/requirements">📝 Requirements</a>
       <a href="/admin/quotes">💬 Quotations</a>
+      <a href="/admin/meetings" class="<%= path==='/admin/meetings' ? 'on':'' %>">🤝 Meetings</a>
       <a href="/admin/products">📦 Products</a>
       <a href="/admin/users">👤 Users</a>
       <a href="/admin/categories">🗂 Categories</a>
@@ -21,6 +22,7 @@
         <h6>Buying</h6>
         <a href="/requirements/new" class="<%= path==='/requirements/new' ? 'on':'' %>">➕ Post requirement</a>
         <a href="/my/requirements" class="<%= path.startsWith('/my/requirements') ? 'on':'' %>">📝 My requirements & quotes</a>
+        <a href="/confidential" class="<%= path.startsWith('/confidential') ? 'on':'' %>">🔒 Confidential sourcing <span class="badge b-premium" style="font-size:10px">NDA</span></a>
         <a href="/my/saved" class="<%= path==='/my/saved' ? 'on':'' %>">⭐ Saved suppliers</a>
         <a href="/search?type=suppliers">🔎 Find suppliers</a>
       <% } %>
@@ -28,10 +30,12 @@
         <h6>Selling</h6>
         <a href="/supplier/products" class="<%= path.startsWith('/supplier/products') ? 'on':'' %>">📦 Products & stock</a>
         <a href="/supplier/rfqs" class="<%= path==='/supplier/rfqs' ? 'on':'' %>">📥 RFQ inbox</a>
+        <a href="/supplier/ndas" class="<%= path==='/supplier/ndas' || path.startsWith('/nda/') ? 'on':'' %>">🔏 NDA requests</a>
         <a href="/supplier/quotes" class="<%= path==='/supplier/quotes' ? 'on':'' %>">💬 My quotations</a>
         <a href="/requirements">🌐 Browse buyer requirements</a>
       <% } %>
       <h6>Account</h6>
+      <a href="/meetings" class="<%= path==='/meetings' ? 'on':'' %>">🤝 Meetings</a>
       <a href="/messages" class="<%= path.startsWith('/messages') ? 'on':'' %>">✉ Messages</a>
       <a href="/notifications" class="<%= path==='/notifications' ? 'on':'' %>">🔔 Notifications<% if (unread) { %> <span class="dot" style="position:static"><%= unread %></span><% } %></a>
       <a href="/company/edit" class="<%= path==='/company/edit' ? 'on':'' %>">🏢 Company profile</a>

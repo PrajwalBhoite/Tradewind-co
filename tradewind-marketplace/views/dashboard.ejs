@@ -1,6 +1,6 @@
 <%- include('partials/app-start') %>
 <div class="page-h"><div><h1>Welcome, <%= user.name.split(' ')[0] %></h1><p class="muted mb0"><%= company.name %> · <%= company.is_buyer && company.is_supplier ? 'Buyer & Supplier' : company.is_buyer ? 'Buyer' : 'Supplier' %></p></div>
-  <div class="row"><% if (company.is_buyer) { %><a class="btn btn-primary" href="/requirements/new">+ Post requirement</a><% } %><% if (company.is_supplier) { %><a class="btn btn-navy" href="/supplier/products/new">+ Add product</a><% } %></div></div>
+  <div class="row"><% if (company.is_buyer) { %><a class="btn btn-primary" href="/requirements/new">+ Post requirement</a><a class="btn btn-outline" href="/confidential/new">🔒 Confidential RFQ</a><% } %><% if (company.is_supplier) { %><a class="btn btn-navy" href="/supplier/products/new">+ Add product</a><% } %></div></div>
 
 <% if (d.completeness < 80 || company.verification_status !== 'verified') { %>
 <div class="card" style="border-left:4px solid var(--orange)">
@@ -30,8 +30,15 @@
   </div>
 </div><% } %>
 
+<% if (company.is_buyer && d.cs.length) { %>
+<div class="card mt"><div class="card-h"><h3>🔒 Confidential sourcing in progress</h3><a href="/confidential">All</a></div>
+  <% d.cs.forEach(r => { %><div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><a href="/confidential/<%= r.id %>"><b><%= r.ref %></b> <%= r.title %></a>
+    <span class="row"><%- include('partials/badge', { s: r.status }) %><% if (r.to_countersign) { %><span class="badge b-pending">✍ <%= r.to_countersign %> NDA to countersign</span><% } %></span></div><% }) %>
+</div><% } %>
+
 <% if (company.is_supplier) { %>
 <h2 class="mt2">Selling</h2>
+<% if (d.supStats.ndas) { %><div class="alert alert-info">🔏 You have <b><%= d.supStats.ndas %></b> NDA request<%= d.supStats.ndas>1?'s':'' %> from buyers running confidential sourcing. <a href="/supplier/ndas"><b>Review & sign →</b></a></div><% } %>
 <div class="stats six">
   <div class="stat"><b><%= d.supStats.products %></b><span>Products</span></div>
   <div class="stat"><b><%= d.supStats.stock %></b><span>In ready stock</span></div>
@@ -46,6 +53,12 @@
   <% d.invites.forEach(i => { %><tr><td><b><%= i.ref %></b> <%= i.confidential ? '🔒 ' : '' %><%= i.title %></td><td><span class="score"><%= i.match_score %>%</span></td><td><%= h.num(i.quantity) %> <%= i.unit %></td><td><%= i.delivery_country %></td><td><%= h.date(i.quote_deadline) %></td><td><%- include('partials/badge', { s: i.status }) %></td><td><a class="btn btn-primary btn-sm" href="/rfq/<%= i.requirement_id %>">Open</a></td></tr><% }) %>
   </table><% } %>
 </div><% } %>
+
+<div class="card mt"><div class="card-h"><h3>🤝 Upcoming meetings</h3><a href="/meetings">All meetings</a></div>
+  <% if (!d.meetings.length) { %><div class="empty">No upcoming meetings. Request one from any shared RFQ.</div><% } %>
+  <% d.meetings.forEach(m => { %><div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><span><a href="/meetings#m<%= m.id %>"><b><%= m.purpose %></b></a> with <%= m.other %><br><small class="muted"><%= d.TZ.fmt(m.start_utc, d.tz) %></small></span>
+    <span class="row"><span class="badge b-m-<%= m.status %>"><%= m.status %></span><% if (m.link && m.status==='confirmed') { %><a class="btn btn-green btn-sm" href="<%= m.link %>" target="_blank" rel="noopener">Join</a><% } %></span></div><% }) %>
+</div>
 
 <div class="card mt"><div class="card-h"><h3>Recent conversations</h3><a href="/messages">All messages</a></div>
   <% if (!d.threads.length) { %><div class="empty">No conversations yet.</div><% } %>

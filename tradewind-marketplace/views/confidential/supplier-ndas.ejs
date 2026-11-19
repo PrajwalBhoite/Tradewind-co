@@ -1,0 +1,10 @@
+<%- include('../partials/app-start') %>
+<h1>🔏 NDA requests</h1>
+<p class="muted">Buyers running confidential sourcing have shortlisted your company. Review the basics, sign the NDA, and once the buyer countersigns you'll receive the full RFQ and drawings.</p>
+<% if (!rows.length) { %><div class="card empty">No NDA requests yet. Keep your profile verified and detailed — confidential RFQs only go to verified suppliers.</div><% } else { %>
+<div class="table-wrap"><table><tr><th>RFQ</th><th>Buyer</th><th>Annual qty</th><th>Delivery</th><th>NDA</th><th></th></tr>
+<% rows.forEach(n => { %><tr><td><b><%= n.ref %></b><br><%= n.title %></td><td><%= n.buyer %><br><small><%= n.buyer_country %></small></td><td><%= h.num(n.annual_qty) %> <%= n.unit %></td><td><%= n.delivery_location %></td>
+  <td><span class="badge b-nda-<%= n.status %>"><%= n.released ? 'RFQ released' : { sent: 'Action needed', supplier_signed: 'Awaiting buyer countersign', signed_both: 'Signed by both', declined: 'Declined' }[n.status] %></span></td>
+  <td><a class="btn btn-<%= n.status==='sent' ? 'primary' : 'outline' %> btn-sm" href="<%= n.released ? '/rfq/' : '/nda/' %><%= n.requirement_id %>"><%= n.status==='sent' ? 'Review & sign' : n.released ? 'Open RFQ' : 'View' %></a></td></tr><% }) %>
+</table></div><% } %>
+<%- include('../partials/app-end') %>

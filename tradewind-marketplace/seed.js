@@ -115,7 +115,7 @@ function demo() {
   const u1 = get("SELECT id FROM users WHERE email='buyer@demo.com'").id;
   const u2 = get("SELECT id FROM users WHERE email='buyer2@demo.com'").id;
   const r1 = R(buyer, u1, { title: 'SG Iron brake disc castings for metro bogies', cat: 'Railway Castings', mat: 'SG Iron', grade: 'EN-GJS-500-7', spec: 'Machined brake discs as per drawing, 32 kg each, 3.1 material certificates, UT tested.', qty: 2400, unit: 'pcs', target: 118, inc: 'CIF', loc: 'Jebel Ali Port', country: 'United Arab Emirates', by: '+75 days', dl: '+14 days', status: 'open' });
-  R(buyer, u1, { title: 'Forged gate valves 2" Class 800', cat: 'Gate Valves', mat: 'Carbon Steel', grade: 'ASTM A105', spec: 'API 602, SW ends, with test certificates', qty: 600, unit: 'pcs', target: 35, inc: 'FOB', loc: 'Dubai', country: 'United Arab Emirates', by: '+45 days', dl: '+10 days', status: 'open', conf: 1 });
+  R(buyer, u1, { title: 'Forged gate valves 2" Class 800', cat: 'Gate Valves', mat: 'Carbon Steel', grade: 'ASTM A105', spec: 'API 602, SW ends, with test certificates', qty: 600, unit: 'pcs', target: 35, inc: 'FOB', loc: 'Dubai', country: 'United Arab Emirates', by: '+45 days', dl: '+10 days', status: 'open' });
   R(buyer2, u2, { title: 'Ground-mount solar structures for 40 MW park', cat: 'Solar Mounting Structures', mat: 'Galvanised Steel', grade: 'S350GD', spec: 'Fixed tilt 25°, 2P portrait, Eurocode wind/snow loads, design support required', qty: 1600, unit: 'sets', target: 50, cur: 'EUR', inc: 'DAP', loc: 'Hamburg', country: 'Germany', by: '+120 days', dl: '+21 days', status: 'open' });
   R(buyer2, u2, { title: 'S355 steel plates 20 mm', cat: 'Steel Plates & Coils', mat: 'Carbon Steel', grade: 'S355JR', spec: '2000 x 6000 mm, MTC 3.1', qty: 120, unit: 'tons', target: 700, inc: 'CFR', loc: 'Hamburg', country: 'Germany', by: '+60 days', dl: '+7 days', status: 'pending_review' });
 
@@ -134,10 +134,56 @@ function demo() {
   run('INSERT INTO messages(thread_id,sender_user_id,sender_company_id,body) VALUES(?,?,?,?)', t, u1, buyer, 'Can you confirm hardness range after machining and whether you can supply PPAP Level 3?');
   run('INSERT INTO messages(thread_id,sender_user_id,sender_company_id,body) VALUES(?,?,?,?)', t, get("SELECT id FROM users WHERE email='supplier@demo.com'").id, s1, 'Yes — 170–230 HB, and PPAP Level 3 documentation is included in the quoted price.');
 
+  run("UPDATE users SET timezone='Asia/Dubai' WHERE email='buyer@demo.com'");
+  run("UPDATE users SET timezone='Europe/Berlin' WHERE email='buyer2@demo.com'");
+  run("UPDATE users SET timezone='Asia/Kolkata' WHERE email IN ('supplier@demo.com','supplier2@demo.com')");
+  run("UPDATE users SET timezone='Asia/Dubai' WHERE email='supplier3@demo.com'");
+  run("UPDATE users SET timezone='Asia/Bangkok' WHERE email='supplier4@demo.com'");
+  // ---- Confidential (NDA-gated) sourcing demo: NordWind → gearbox housing ----
+  const { identifyConfidential } = require('./lib/matching');
+  const cs = run(`INSERT INTO requirements(buyer_company_id,user_id,title,category_id,industry,description,material,grade,weight_per_piece,process,size_envelope,certs_required,
+      annual_qty,batch_qty,quantity,unit,target_price,currency,share_target_price,incoterm,delivery_location,delivery_country,preferred_countries,quote_deadline,
+      specifications,confidential,sourcing_type,nda_mode,status) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,date('now','+21 days'),?,1,'confidential','standard','open')`,
+    buyer2, u2, 'Ductile iron gearbox housing', cat('Iron Castings'), 'Metal Castings & Forgings', 'Split gearbox housing for a heavy-duty drive unit; machined bearing bores.',
+    'Ductile Iron', 'EN-GJS-500-7', 42, 'Casting, Machining', '620 × 480 × 350 mm', 'ISO 9001, EN 10204 3.1', 1800, 150, 1800, 'pcs', 210, 'USD', 1, 'CIF', 'Hamburg', 'Germany',
+    'India, Turkey', 'Bearing bores Ø180 H7, flatness 0.05 mm on split face, UT level 2 on bosses, FAI + PPAP level 3, painted RAL 7035.').lastInsertRowid;
+  run('UPDATE requirements SET ref=? WHERE id=?', 'TW-CS-' + (1000 + Number(cs)), cs);
+  identifyConfidential(cs);
+  run('UPDATE rfq_invites SET shortlisted=1 WHERE requirement_id=? AND supplier_company_id IN (?,?)', cs, s1, s2);
+  const sUser = get("SELECT id FROM users WHERE email='supplier@demo.com'");
+  run(`INSERT INTO nda_agreements(requirement_id,supplier_company_id,status,supplier_signer_name,supplier_signer_title,supplier_signed_at,supplier_ip,buyer_signer_name,buyer_signer_title,buyer_signed_at,buyer_ip)
+       VALUES(?,?,'signed_both','Rahul Patil','Export Manager',datetime('now','-2 days'),'203.0.113.10','Lena Fischer','Strategic Sourcing',datetime('now','-1 days'),'198.51.100.7')`, cs, s1);
+  run("INSERT INTO nda_agreements(requirement_id,supplier_company_id,status) VALUES(?,?,'sent')", cs, s2);
+  run("UPDATE rfq_invites SET status='sent', released=1, released_at=datetime('now','-1 days') WHERE requirement_id=? AND supplier_company_id=?", cs, s1);
+  run("UPDATE rfq_invites SET status='sent' WHERE requirement_id=? AND supplier_company_id=?", cs, s2);
+  // sample drawing in the secure vault
+  const H = require('./lib/helpers');
+  const fname = crypto.randomBytes(12).toString('hex') + '.png';
+  fs.copyFileSync(path.join(__dirname, 'seed-assets', 'sample-drawing.png'), path.join(H.PRIVATE_UP, fname));
+  run('INSERT INTO vault_files(requirement_id,filename,original_name,size,uploaded_by) VALUES(?,?,?,?,?)', cs, fname, 'GH-620_gearbox_housing_RevA.png', fs.statSync(path.join(H.PRIVATE_UP, fname)).size, u2);
+
+  // ---- Meetings demo ----
+  const TZ = require('./lib/tz');
+  const day = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+  const M = (rid, from, fromUser, to, purpose, d, t, tz, status, link, desc) => {
+    const id = run(`INSERT INTO meetings(requirement_id,requester_company_id,requester_user_id,with_company_id,purpose,description,start_utc,local_date,local_time,timezone,platform,link,status,last_action_company_id)
+      VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, rid, from, fromUser, to, purpose, desc, TZ.zonedToUtc(d, t, tz).toISOString(), d, t, tz,
+      link && link.includes('teams') ? 'teams' : 'zoom', link, status, from).lastInsertRowid;
+    run('UPDATE meetings SET ref=? WHERE id=?', 'MTG-' + (1000 + Number(id)), id);
+  };
+  M(r1, buyer, u1, s1, 'Technical discussion', day(3), '11:00', 'Asia/Dubai', 'confirmed', 'https://zoom.us/j/1234567890',
+    'Review machining tolerances, UT plan and first-article timeline. (Demo link)');
+  M(r1, s1, sUser.id, buyer, 'Commercial negotiation', day(6), '15:30', 'Asia/Kolkata', 'requested', null, 'Discuss payment terms and annual volume pricing.');
+  M(cs, buyer2, u2, s1, 'Drawing / specification clarification', day(4), '10:00', 'Europe/Berlin', 'requested', null, 'Walk through bore tolerances and split-face flatness on drawing GH-620.');
+
   console.log('\nDemo data loaded. Logins (password Demo@1234):');
   console.log('  Buyer:    buyer@demo.com   |  buyer2@demo.com');
   console.log('  Supplier: supplier@demo.com | supplier2@demo.com | supplier3@demo.com | supplier4@demo.com');
+  console.log('  Confidential sourcing demo: log in as buyer2@demo.com → Confidential sourcing; supplier2@demo.com has an NDA to sign.');
 }
 
 module.exports = { ensureBase, INDUSTRIES };
-if (require.main === module) demo();
+if (require.main === module) {
+  if (process.argv.includes('--reset') && !process.argv.includes('--demo')) { ensureBase(); console.log('Fresh empty database ready (run "npm run seed" to add demo data).'); }
+  else demo();
+}

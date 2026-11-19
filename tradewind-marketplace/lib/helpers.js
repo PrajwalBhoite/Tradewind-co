@@ -77,7 +77,7 @@ const ago = (d) => {
 const STATUS_LABEL = {
   pending_review: 'Under review', open: 'Open', closed: 'Closed', awarded: 'Awarded', rejected: 'Rejected',
   submitted: 'Submitted', shortlisted: 'Shortlisted', withdrawn: 'Withdrawn',
-  sent: 'New', viewed: 'Viewed', quoted: 'Quoted', declined: 'Declined',
+  sent: 'New', viewed: 'Viewed', quoted: 'Quoted', declined: 'Declined', proposed: 'Profile proposed',
   unverified: 'Unverified', pending: 'Verification pending', verified: 'Verified',
   ready_stock: 'Ready stock', made_to_order: 'Made to order', active: 'Active', hidden: 'Hidden', suspended: 'Suspended',
 };

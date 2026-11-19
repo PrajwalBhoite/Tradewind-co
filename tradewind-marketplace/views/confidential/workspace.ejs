@@ -1,0 +1,120 @@
+<%- include('../partials/app-start') %>
+<small class="muted"><a href="/confidential">Confidential sourcing</a> / <%= r.ref %></small>
+<div class="page-h"><div><h1><%= r.title %></h1><p class="muted mb0"><%= r.category %> · <%= h.num(r.annual_qty) %> <%= r.unit %>/yr (batch <%= h.num(r.batch_qty) %>) · <%= r.incoterm %> <%= r.delivery_location %></p></div>
+  <div class="row"><%- include('../partials/badge', { s: r.status }) %><span class="badge b-premium">🔒 Confidential</span>
+    <% if (quotes) { %><a class="btn btn-navy" href="/my/requirements/<%= r.id %>">💬 View <%= quotes %> quotation<%= quotes>1?'s':'' %></a><% } %></div></div>
+<%- include('../partials/cs-steps', { stage }) %>
+
+<% if (r.status === 'pending_review') { %><div class="alert alert-info">⏳ Step 1 complete. TradeWind is screening your basic requirement and will propose verified supplier profiles. No supplier can see anything.</div><% } %>
+<% if (r.status === 'rejected') { %><div class="alert alert-error">Needs changes: <%= r.admin_note || 'please contact support' %></div><% } %>
+
+<div class="grid" style="grid-template-columns:1.9fr 1fr;align-items:start">
+  <div>
+    <div class="card" id="profiles">
+      <div class="card-h"><h2>Supplier profiles identified by TradeWind</h2><small class="muted"><%= invites.length %> verified match<%= invites.length===1?'':'es' %></small></div>
+      <% if (!invites.length) { %><div class="empty"><%= r.status === 'pending_review' ? 'Profiles appear here once TradeWind approves your requirement.' : 'No profiles yet. You can also add suppliers from their profile page.' %></div><% } else { %>
+      <div class="table-wrap"><table>
+        <tr><th>Supplier</th><th>Type · Country</th><th>Capabilities</th><th>Match</th><th>Trust</th><th>Shortlist</th><th>NDA status</th></tr>
+        <% invites.forEach(i => { %><tr>
+          <td><a href="/companies/<%= i.supplier_company_id %>" target="_blank"><b><%= i.name %></b></a><% if (i.verification_status==='verified') { %> <span class="verified">✔</span><% } %></td>
+          <td><small><%= i.business_type %> · <%= i.country %></small></td>
+          <td><small><%= (i.capabilities || '').slice(0, 60) %><br><%= i.certifications || '' %></small></td>
+          <td><span class="score"><%= i.match_score %>%</span></td>
+          <td><b style="color:<%= i.trust >= 80 ? 'var(--green)' : 'var(--amber)' %>"><%= i.trust %></b></td>
+          <td><% if (!i.nda_status && r.status === 'open') { %>
+            <form method="post" action="/confidential/<%= r.id %>/shortlist"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="supplier_company_id" value="<%= i.supplier_company_id %>"><input type="hidden" name="on" value="<%= i.shortlisted ? 0 : 1 %>">
+              <button class="btn btn-sm <%= i.shortlisted ? 'btn-green' : 'btn-outline' %>"><%= i.shortlisted ? '✓ Shortlisted' : '+ Shortlist' %></button></form>
+            <% } else { %><%= i.shortlisted ? '✓ Yes' : 'No' %><% } %></td>
+          <td><% if (i.released) { %><span class="badge b-awarded">RFQ released</span>
+            <% } else if (i.nda_status) { %><span class="badge b-nda-<%= i.nda_status %>"><%= { sent: 'NDA sent', supplier_signed: 'Awaiting your countersign', signed_both: 'Signed by both', declined: 'Declined' }[i.nda_status] %></span>
+            <% } else { %><span class="badge"><%= i.shortlisted ? 'Not sent yet' : 'Not required' %></span><% } %></td>
+        </tr><% }) %>
+      </table></div>
+      <div class="alert alert-info">ℹ Your company name is disclosed only to shortlisted suppliers, through the NDA. Non-shortlisted suppliers never see your identity or drawings.</div>
+      <% } %>
+    </div>
+
+    <div class="card" id="nda">
+      <div class="card-h"><h2>NDA signatures</h2>
+        <% if (tracker.unsent && r.status === 'open') { %><form method="post" action="/confidential/<%= r.id %>/share-nda"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-primary" data-confirm="Share your NDA (and your company name) with <%= tracker.unsent %> shortlisted supplier(s)?">📄 Share NDA with shortlist (<%= tracker.unsent %>)</button></form><% } %></div>
+      <% const signing = invites.filter(i => i.nda_status); %>
+      <% if (!signing.length) { %><p class="muted">Shortlist suppliers above, then share your NDA. Each supplier e-signs, then you countersign.</p><% } %>
+      <% signing.forEach(i => { %>
+        <div class="nda-row">
+          <div><b><%= i.name %></b> <span class="badge b-nda-<%= i.nda_status %>"><%= { sent: 'Awaiting supplier e-sign', supplier_signed: 'Supplier signed', signed_both: 'Signed by both', declined: 'Declined' }[i.nda_status] %></span><br>
+            <small class="muted">
+              <% if (i.supplier_signed_at) { %>Supplier: <%= i.supplier_signer_name %>, <%= i.supplier_signer_title %> · <%= h.date(i.supplier_signed_at) %><% } %>
+              <% if (i.buyer_signed_at) { %> · You countersigned <%= h.date(i.buyer_signed_at) %><% } %>
+              <% if (i.decline_reason) { %>Reason: <%= i.decline_reason %><% } %>
+            </small>
+            <div class="row" style="margin-top:4px"><a class="btn btn-ghost btn-sm" href="/nda/<%= r.id %>/document?supplier=<%= i.supplier_company_id %>" target="_blank">View NDA record</a>
+            <% if (i.supplier_signed_file) { %><a class="btn btn-ghost btn-sm" href="/nda/signed/<%= i.nda_id %>">⬇ Signed copy</a><% } %></div>
+          </div>
+          <% if (i.nda_status === 'supplier_signed') { %>
+          <form method="post" action="/confidential/<%= r.id %>/countersign" class="countersign">
+            <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="nda_id" value="<%= i.nda_id %>">
+            <input type="text" name="signer_name" value="<%= user.name %>" required placeholder="Your full name">
+            <input type="text" name="signer_title" value="<%= user.designation || '' %>" placeholder="Designation">
+            <label class="check" style="font-size:12.5px"><input type="checkbox" name="agree" value="1" required> I countersign this NDA on behalf of <%= company.name %></label>
+            <button class="btn btn-green btn-sm">✍ Countersign</button>
+          </form><% } %>
+        </div>
+      <% }) %>
+    </div>
+
+    <div class="card" id="vault">
+      <div class="card-h"><h2>🔒 Secure drawing vault</h2><small class="muted">View-only · watermarked per supplier · every access logged</small></div>
+      <% if (!vault.length) { %><p class="muted">No drawings uploaded yet. Upload them now — they stay locked until you release the RFQ to NDA-signed suppliers.</p><% } %>
+      <% vault.forEach(f => { %><div class="row between" style="padding:8px 0;border-bottom:1px solid var(--line)"><span>📄 <a href="/vault/<%= f.id %>" target="_blank"><%= f.original_name %></a> <small class="muted"><%= Math.round((f.size||0)/1024) %> KB · <%= h.ago(f.created_at) %></small></span>
+        <form method="post" action="/confidential/<%= r.id %>/vault/<%= f.id %>/delete"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-danger btn-sm" data-confirm="Remove this file from the vault?">Remove</button></form></div><% }) %>
+      <form method="post" action="/confidential/<%= r.id %>/vault" enctype="multipart/form-data" class="row mt"><input type="hidden" name="_csrf" value="<%= csrf %>">
+        <input type="file" name="files" multiple required><button class="btn btn-outline btn-sm">⬆ Upload to vault</button></form>
+      <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+      <h3>Full RFQ details (released with the drawings)</h3>
+      <form method="post" action="/confidential/<%= r.id %>/details"><input type="hidden" name="_csrf" value="<%= csrf %>">
+        <div class="field"><label>Full technical specification</label><textarea name="specifications" rows="4" placeholder="Tolerances, critical dimensions, testing, PPAP level, packing, inspection…"><%= r.specifications || '' %></textarea></div>
+        <div class="grid g2"><div class="field"><label>Required delivery date</label><input type="date" name="required_by" value="<%= r.required_by || '' %>"></div>
+          <div class="field"><label>Quotation deadline</label><input type="date" name="quote_deadline" value="<%= r.quote_deadline || '' %>"></div></div>
+        <label class="check"><input type="checkbox" name="allow_download" value="1" <%= r.allow_download ? 'checked' : '' %>> Allow released suppliers to download originals (otherwise view-only)</label>
+        <button class="btn btn-outline mt">Save details</button></form>
+    </div>
+  </div>
+
+  <div>
+    <div class="card"><h3>📄 NDA tracker</h3>
+      <div class="tracker">
+        <div><span><%= r.nda_mode === 'own' ? '✅ Buyer NDA uploaded' : '✅ TradeWind standard NDA' %></span><b><%= r.nda_mode === 'own' ? (r.nda_file_name || '') : 'Mutual NDA' %></b></div>
+        <div><span><%= tracker.shared ? '✅' : '○' %> Shared with shortlist</span><b><%= tracker.shared %> supplier<%= tracker.shared===1?'':'s' %></b></div>
+        <div><span><%= tracker.signedBoth ? '✅' : '○' %> Signed by both parties</span><b><%= tracker.signedBoth %> of <%= tracker.shared %></b></div>
+        <div><span>⏳ Pending supplier e-signature</span><b><%= tracker.pendingSupplier %></b></div>
+        <div><span>✍ Awaiting your countersign</span><b><%= tracker.pendingBuyer %></b></div>
+      </div>
+      <% if (!tracker.shared) { %>
+      <form method="post" action="/confidential/<%= r.id %>/nda-doc" enctype="multipart/form-data" class="mt"><input type="hidden" name="_csrf" value="<%= csrf %>">
+        <label class="check"><input type="radio" name="nda_mode" value="standard" <%= r.nda_mode!=='own'?'checked':'' %>> TradeWind standard NDA (<a href="/nda-template" target="_blank">view</a>)</label>
+        <label class="check"><input type="radio" name="nda_mode" value="own" <%= r.nda_mode==='own'?'checked':'' %>> My company NDA</label>
+        <input type="file" name="nda_file" accept=".pdf,.doc,.docx" class="mt"><button class="btn btn-ghost btn-sm mt">Save NDA choice</button></form>
+      <% } else if (r.nda_file) { %><a class="btn btn-ghost btn-sm mt" href="/nda/<%= r.id %>/file">⬇ Download my NDA</a><% } %>
+    </div>
+    <div class="card release-card">
+      <h3>🚀 Release full RFQ</h3>
+      <p class="muted" style="font-size:14px">Sends the full specification and vault access to suppliers whose NDA is <b>signed by both parties</b>. They can then quote; quotes go through TradeWind review.</p>
+      <form method="post" action="/confidential/<%= r.id %>/release"><input type="hidden" name="_csrf" value="<%= csrf %>">
+        <button class="btn btn-primary btn-block btn-lg" <%= tracker.toRelease ? '' : 'disabled' %>>➤ Release RFQ to NDA-signed suppliers (<%= tracker.toRelease %>)</button></form>
+      <% if (!vault.length) { %><p class="hint">Tip: upload drawings to the vault before releasing.</p><% } %>
+    </div>
+    <div class="card"><h3>Basics shared with shortlist</h3>
+      <dl class="kv" style="grid-template-columns:120px 1fr;font-size:13.5px">
+        <dt>Description</dt><dd><%= r.description %></dd><dt>Material</dt><dd><%= r.material %> <%= r.grade %></dd>
+        <dt>Weight</dt><dd><%= r.weight_per_piece ? r.weight_per_piece + ' kg' : '—' %></dd><dt>Process</dt><dd><%= r.process || '—' %></dd>
+        <dt>Size</dt><dd><%= r.size_envelope || '—' %></dd><dt>Certifications</dt><dd><%= r.certs_required || '—' %></dd>
+        <dt>Target price</dt><dd><%= h.money(r.target_price, r.currency) %> <%= r.share_target_price ? '' : '(hidden)' %></dd>
+        <dt>Countries</dt><dd><%= r.preferred_countries || 'Any' %></dd></dl>
+    </div>
+    <div class="card"><h3>Vault access log</h3>
+      <% if (!accessLog.length) { %><p class="muted">No access yet.</p><% } %>
+      <% accessLog.forEach(l => { %><div style="font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--line)"><b><%= l.company %></b> · <%= l.action.replace('_',' ') %> <%= l.file || '' %><br><span class="muted"><%= l.user %> · <%= h.ago(l.created_at) %> · <%= l.ip %></span></div><% }) %>
+    </div>
+  </div>
+</div>
+<%- include('../partials/app-end') %>
